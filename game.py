@@ -5,6 +5,9 @@ import random as rand
 suits = {"Diamonds": 1, "Hearts": 2, "Spades": 3, "Clubs": 4}
 acceptedValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 legalActions = ["Call", "Raise", "Fold", "All-in", "Double Down"]
+hands = {"Royal Flush": 31, "Straight Flush": 30, "Four of a Kind": 8, "Full House": 29, "Flush": 28, "Straight": 27, "Three of a Kind": 26, "Two Pair": 25, "Pair" : 24}
+names = ["John", "Alex", "Steve", "Lev"]
+
 
 class PlayingCard:
 
@@ -55,7 +58,12 @@ class Deck:
 
     # TODO: deal with decks running out of cards
     def draw(self):
-        return self.cards.pop()
+        try:
+            card = self.cards.pop()
+        except:
+            self.__init__()
+            card = self.cards.pop()
+        return card
 
     def shuffle(self):
         rand.shuffle(self.cards)
@@ -77,6 +85,7 @@ class Player:
         self.hand = []
         self.isWinner = False
         self.newHand()
+        self.name = rand.choice(names)
 
     def bet(self, val):
         if val > self.money:
@@ -98,10 +107,10 @@ class Player:
             self.hand.append(deck.draw())
 
     def __str__(self):
-        return "Player hand: {}\nPlayer cash: {}".format(self.hand, self.money)
+        return "{} | Hand: {} Cash: {}".format(self.name, self.hand, self.money)
 
     def __repr__(self):
-        return "Player hand: {}\nPlayer cash: {}".format(self.hand, self.money)
+        return "{} | Hand: {} Cash: {}".format(self.name, self.hand, self.money)
 
 class Pot:
 
@@ -126,20 +135,106 @@ class Poker:
         self.decks = decks
         self.players = []
         for _ in range(numPlayers):
-            self.players.append(Player(1000, 7, self.decks, self.pot))
+            self.players.append(Player(1000, 2, self.decks, self.pot))
         self.actions = legalActions
         # dealer handsize is one less than starting so that it can draw at the beginning of the first round
-        self.dealer = Player(0, 1, self.decks, self.pot)
+        self.dealer = Player(0, 2, self.decks, self.pot)
         self.isGameOver = False
         self.ante = 1
+
+    def isStraightFlush(self, hand):
+        lastVal = None
+        for card in hand:
+            if lastVal == None:
+                lastVal = card.value
+                pass
+            # TODO: Ace can be 1 or 14
+            if card.value == lastVal + 1:
+                lastVal = card.value
+            else:
+                return False
+        return True
+
+    def handToScore(self, hand):
+        """Given a player's hand, returns the highest point score they can make."""
+        scoringCards = hand + self.dealer.hand
+        hearts = [card for card in scoringCards if card.suit == "Hearts"]
+        diamonds = [card for card in scoringCards if card.suit == "Diamonds"]
+        spades = [card for card in scoringCards if card.suit == "Spades"]
+        clubs = [card for card in scoringCards if card.suit == "Clubs"]
+        scoringSuits = [hearts, diamonds, spades, clubs]
+        for s in scoringSuits:
+            if len(s) == 0:
+                scoringSuits.remove(s)
+
+        ranks = []
+        for value in acceptedValues:
+            ranks.append([card for card in scoringCards if card.value == value])
+        bestHand = 0
+        for suit in scoringSuits:
+            royalFlush = [PlayingCard(suit[0].suit, 1), PlayingCard(suit[0].suit, 13), PlayingCard(suit[0].suit, 12), PlayingCard(suit[0].suit, 11), PlayingCard(suit[0].suit, 10)]
+            if len(suit) == 5:
+                # check for royal/straight flush/flush
+                if royalFlush.sort() is suit.sort():
+                    if bestHand < hands["Royal Flush"]:
+                        bestHand = hands["Royal Flush"]
+                elif self.isStraightFlush(scoringCards):
+                    if bestHand < hands["Straight Flush"]:
+                        bestHand = hands["Straight Flush"]
+                else:
+                    if bestHand < hands["Flush"]:
+                        bestHand = hands["Flush"]
+        threeOfAKind = False
+        pair = False
+        for rank in ranks:
+            if len(rank) == 4:
+                # four of a kind
+                if bestHand < hands["Four of a Kind"]:
+                    bestHand = hands["Four of a Kind"]
+            if len(rank) == 3:
+                # three of a kind, or full house
+                if pair:
+                    if bestHand < hands["Full House"]:
+                        bestHand = hands["Full House"]
+                threeOfAKind = True
+                if bestHand < hands["Three of a Kind"]:
+                    bestHand = hands["Three of a Kind"]
+            if len(rank) == 2:
+                # pair
+                if threeOfAKind:
+                    if bestHand < hands["Full House"]:
+                        bestHand = hands["Full House"]
+                if pair:
+                    if bestHand < hands["Two Pair"]:
+                        bestHand = hands["Two Pair"]
+                else:
+                    pair = True
+                    if bestHand < hands["Pair"]:
+                        bestHand = hands["Pair"]
+        if bestHand == 0:
+            bestHand = max([x.value for x in hand])
+        return bestHand
 
     def declareWinner(self, players):
         """Given a list of players, compares their hands against each other
         (taking into account the dealer's cards) to determine the winner(s)
-        of the hand."""
-        # TODO
-        return players
-        pass
+        of the hand. Returns a list of winning players."""
+        if len(players) == 1:
+            return [players[0]]
+        scores = []
+        for player in players:
+            scores.append((self.handToScore(player.hand + self.dealer.hand), player))
+        # TODO: enforce suit precedence
+        return [player for score, player in scores if score == max(scores)]
+
+    def getRichestPlayer(self):
+        richest = None
+        mostMoney = float("-inf")
+        for player in self.players:
+            if player.money > mostMoney:
+                mostMoney = player.money
+                richest = player
+        return player
 
     def playHand(self):
         handComplete = False
@@ -159,9 +254,9 @@ class Poker:
             if len(self.dealer.hand) > 5 or len(roundPlayers) == 1:
                 self.winningPlayers = self.declareWinner(roundPlayers)
                 handComplete = True
-            # players receive cards
-            for player in self.players:
-                player.draw()
+            # # players receive cards
+            # for player in self.players:
+            #     player.draw()
             # expose dealer's hand to the players for their decision-making
             dealerHand = self.dealer.hand
             # players decide to take an action based on the available information
@@ -178,8 +273,9 @@ class Poker:
                     # TODO
                     action = rand.choice(legalActions)
                     # if a player cannot at least call, they must fold
-                    if player.money < callVal:
+                    if player.money < callVal or player.money == 0:
                         action = "Fold"
+                    print("{} is taking action {}".format(player, action))
                     if action == "Call":
                         player.bet(callVal)
                     if action == "Raise":
@@ -201,7 +297,6 @@ class Poker:
         # payout if we're done with the hand
         winners = self.winningPlayers
         self.pot.payOut(winners)
-        print(winners)
         if not self.isGameOver:
             # new dealer hand
             self.dealer.newHand()
@@ -212,7 +307,7 @@ class Poker:
     def playGame(self):
         while not self.isGameOver:
             self.playHand()
-        print("game complete!")
+        print("game complete! {} won.".format(self.getRichestPlayer()))
 
 
 if __name__ == "__main__":
