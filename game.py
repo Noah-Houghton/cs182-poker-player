@@ -4,7 +4,8 @@ import random as rand
 
 suits = {"Diamonds": 1, "Hearts": 2, "Spades": 3, "Clubs": 4}
 acceptedValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-legalActions = {"Call":0, "Raise":1, "Fold":2, "All-in":3, "Double Down":4}
+legalActions = ["Call", "Raise", "Fold", "All-in", "Double Down"]
+
 class PlayingCard:
 
     def __init__(self, suit, value):
@@ -87,7 +88,7 @@ class Player:
         self.money += val
 
     def draw(self):
-        deck = rand.choice(sourceDecks)
+        deck = rand.choice(self.sourceDecks)
         self.hand.append(deck.draw())
 
     def newHand(self):
@@ -120,17 +121,28 @@ class Pot:
 
 class Poker:
 
-    def __init__(self, numPlayers):
+    def __init__(self, numPlayers, decks):
         self.pot = Pot()
-        self.decks = [Deck()]
-        self.players = [Player(1000, 7, self.decks, self.pot), Player(1000, 7, self.decks, self.pot)]
+        self.decks = decks
+        self.players = []
+        for _ in range(numPlayers):
+            self.players.append(Player(1000, 7, self.decks, self.pot))
         self.actions = legalActions
         # dealer handsize is one less than starting so that it can draw at the beginning of the first round
         self.dealer = Player(0, 1, self.decks, self.pot)
         self.isGameOver = False
         self.ante = 1
 
+    def declareWinner(self, players):
+        """Given a list of players, compares their hands against each other
+        (taking into account the dealer's cards) to determine the winner(s)
+        of the hand."""
+        # TODO
+        return players
+        pass
+
     def playHand(self):
+        handComplete = False
         while not handComplete:
             # at the start of the round, let's see if anyone has won or lost
             for player in self.players:
@@ -138,15 +150,15 @@ class Poker:
                     self.players.remove(player)
                     if len(self.players) == 1:
                         self.players[0].isWinner = True
-                        self.gameOver()
-                        roundComplete = False
+                        self.isGameOver = True
+            roundComplete = False
             roundPlayers = list(self.players)
             # dealer draws
             self.dealer.draw()
             # if the dealer is done drawing, declare winners and start new round
-            if len(self.dealer.hand > 5):
-                self.declareWinner(roundPlayers)
-                pass
+            if len(self.dealer.hand) > 5 or len(roundPlayers) == 1:
+                self.winningPlayers = self.declareWinner(roundPlayers)
+                handComplete = True
             # players receive cards
             for player in self.players:
                 player.draw()
@@ -157,17 +169,25 @@ class Poker:
             roundComplete = False
             while not roundComplete:
                 roundComplete = True
+                if len(roundPlayers) == 1:
+                    break
                 for player in roundPlayers:
                     # for each player, select an action based on our agent
                     # the round doesn't end until everyone has called or folded
+
+                    # TODO
+                    action = rand.choice(legalActions)
+                    # if a player cannot at least call, they must fold
+                    if player.money < callVal:
+                        action = "Fold"
                     if action == "Call":
                         player.bet(callVal)
                     if action == "Raise":
-                        raise = 1
-                        player.bet(callVal + raise)
-                        callVal += raise
+                        amtRaise = 1
+                        player.bet(callVal + amtRaise)
+                        callVal += amtRaise
                         roundComplete = False
-                    if action == "Double Down":
+                    if action == "Double down":
                         player.bet(callVal * 2)
                         callVal = callVal * 2
                         roundComplete = False
@@ -179,18 +199,22 @@ class Poker:
                         roundPlayers.remove(player)
 
         # payout if we're done with the hand
-        winners = self.getWinningPlayers(roundPlayers)
+        winners = self.winningPlayers
         self.pot.payOut(winners)
-        # new dealer hand
-        self.dealer.newHand()
-        # new player hands
-        for player in self.players:
-            player.newHand()
+        print(winners)
+        if not self.isGameOver:
+            # new dealer hand
+            self.dealer.newHand()
+            # new player hands
+            for player in self.players:
+                player.newHand()
 
     def playGame(self):
         while not self.isGameOver:
             self.playHand()
+        print("game complete!")
 
 
 if __name__ == "__main__":
-    game = Poker(2)
+    game = Poker(3, [Deck()])
+    game.playGame()
