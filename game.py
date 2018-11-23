@@ -2,10 +2,10 @@
 
 import random as rand
 
-suits = {"Diamonds": 1, "Hearts": 2, "Spades": 3, "Clubs": 4}
+suits = ["Diamonds", "Hearts", "Spades", "Clubs"]
 acceptedValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 legalActions = ["Call", "Raise", "Fold", "All-in", "Double Down"]
-hands = {"Royal Flush": 31, "Straight Flush": 30, "Four of a Kind": 8, "Full House": 29, "Flush": 28, "Straight": 27, "Three of a Kind": 26, "Two Pair": 25, "Pair" : 24}
+hands = {"Royal Flush": 32, "Straight Flush": 31, "Four of a Kind": 30, "Full House": 29, "Flush": 28, "Straight": 27, "Three of a Kind": 26, "Two Pair": 25, "Pair" : 24}
 names = ["John", "Alex", "Steve", "Lev"]
 
 
@@ -56,14 +56,26 @@ class Deck:
                 self.cards.append(PlayingCard(suit, val))
         self.shuffle()
 
-    # TODO: deal with decks running out of cards
     def draw(self):
         try:
             card = self.cards.pop()
+        # if pop fails, we need to reshuffle the deck
+        # this does not take into account cards that players currently have
         except:
             self.__init__()
             card = self.cards.pop()
         return card
+
+    # we may need this for reshuffling?
+    def returnToDeck(self, cards):
+        self.cards += cards
+        self.shuffle()
+
+    # could be useful for special decks and/or proper reshuffling
+    def removeFromDeck(self, cards):
+        for card in cards:
+            self.cards.remove(card)
+        self.shuffle()
 
     def shuffle(self):
         rand.shuffle(self.cards)
@@ -141,6 +153,9 @@ class Poker:
         self.dealer = Player(0, 2, self.decks, self.pot)
         self.isGameOver = False
         self.ante = 1
+
+    def newDecks(self, decks):
+        self.decks = decks
 
     def isStraightFlush(self, hand):
         lastVal = None
@@ -243,9 +258,9 @@ class Poker:
             for player in self.players:
                 if player.money <= 0:
                     self.players.remove(player)
-                    if len(self.players) == 1:
-                        self.players[0].isWinner = True
-                        self.isGameOver = True
+            if len(self.players) == 1:
+                self.players[0].isWinner = True
+                self.isGameOver = True
             roundComplete = False
             roundPlayers = list(self.players)
             # dealer draws
@@ -275,7 +290,6 @@ class Poker:
                     # if a player cannot at least call, they must fold
                     if player.money < callVal or player.money == 0:
                         action = "Fold"
-                    print("{} is taking action {}".format(player, action))
                     if action == "Call":
                         player.bet(callVal)
                     if action == "Raise":
@@ -311,5 +325,6 @@ class Poker:
 
 
 if __name__ == "__main__":
-    game = Poker(3, [Deck()])
-    game.playGame()
+    for _ in range(5):
+        game = Poker(3, [Deck()])
+        game.playGame()
