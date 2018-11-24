@@ -323,7 +323,6 @@ class Poker:
                     roundComplete = False
                 if action == "Fold":
                     player.hasFolded = True
-                # print("{} has taken action {} at callVal {}".format(player, action, callVal))
 
 
     def playHand(self):
