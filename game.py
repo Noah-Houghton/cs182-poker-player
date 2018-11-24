@@ -6,7 +6,7 @@ suits = ["Diamonds", "Hearts", "Spades", "Clubs"]
 acceptedValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 legalActions = ["Call", "Raise", "Fold", "All-in", "Double Down"]
 hands = {"Royal Flush": 32, "Straight Flush": 31, "Four of a Kind": 30, "Full House": 29, "Flush": 28, "Straight": 27, "Three of a Kind": 26, "Two Pair": 25, "Pair" : 24}
-names = ["John", "Alex", "Steve", "Lev"]
+names = ["John", "Alex", "Steve", "Lev", "Herbie", "David", "Eve", "Alyx"]
 
 
 class PlayingCard:
@@ -46,6 +46,11 @@ class PlayingCard:
             return "{} of {}".format("Ace", self.suit)
         else:
             return "{} of {}".format(self.value, self.suit)
+
+    def __gt__(self, card2):
+        return self.value < card2.value
+    def __lt__(self, card2):
+        return self.value < card2.value
 
 class Deck:
 
@@ -89,21 +94,26 @@ class Deck:
 
 class Player:
 
-    def __init__(self, startingMoney, sizeHand, sourceDecks, pot):
+    def __init__(self, startingMoney, sizeHand, sourceDecks):
         self.sizeHand = sizeHand
         self.money = startingMoney
+        self.startingMoney = startingMoney
         self.sourceDecks = sourceDecks
-        self.pot = pot
         self.hand = []
         self.isWinner = False
         self.newHand()
-        self.name = rand.choice(names)
+        self.name = "default"
+        self.hasFolded = False
 
-    def bet(self, val):
+    def reset(self):
+        self.money = self.startingMoney
+        self.hasFolded = False
+
+    def bet(self, val, pot):
         if val > self.money:
             return ValueError
         self.money -= val
-        self.pot.payIn(val)
+        pot.payIn(val)
 
     def receivePayOut(self, val):
         self.money += val
@@ -114,15 +124,29 @@ class Player:
 
     def newHand(self):
         self.hand = []
-        while len(self.hand) < self.sizeHand:
-            deck = rand.choice(self.sourceDecks)
-            self.hand.append(deck.draw())
+        for _ in range(self.sizeHand):
+            self.draw()
+
+    def newDecks(self, decks):
+        self.sourceDecks = decks
 
     def __str__(self):
         return "{} | Hand: {} Cash: {}".format(self.name, self.hand, self.money)
 
     def __repr__(self):
         return "{} | Hand: {} Cash: {}".format(self.name, self.hand, self.money)
+
+    def __gt__(self, player2):
+        return self.money > player2.money
+
+    def __ge__(self, player2):
+        return self.money >= player2.money
+
+    def __lt__(self, player2):
+        return self.money < player2.money
+
+    def __le__(self, player2):
+        return self.money <= player2.money
 
 class Pot:
 
@@ -133,8 +157,9 @@ class Pot:
         self.dollars += val
 
     def payOut(self, players):
+        payout = self.dollars / len(players)
         for player in players:
-            player.receivePayOut(self.dollars / len(players))
+            player.receivePayOut(payout)
         self.dollars = 0
 
     def __str__(self):
@@ -142,23 +167,45 @@ class Pot:
 
 class Poker:
 
-    def __init__(self, numPlayers, decks):
+    def __init__(self, decks, numPlayers=0, startingPlayers=[]):
         self.pot = Pot()
         self.decks = decks
-        self.players = []
-        for _ in range(numPlayers):
-            self.players.append(Player(1000, 2, self.decks, self.pot))
         self.actions = legalActions
         # dealer handsize is one less than starting so that it can draw at the beginning of the first round
-        self.dealer = Player(0, 2, self.decks, self.pot)
+        self.dealer = Player(0, 2, self.decks)
         self.isGameOver = False
         self.ante = 1
+        self.players = startingPlayers
+        self.initPlayers(numPlayers)
+
+    def newDecks(self, decks, bNewHands=False):
+        self.decks = decks
+        for player in self.players:
+            player.newDecks(decks)
+        self.dealer.newDecks(decks)
+        if bNewHands:
+            self.forceNewHands()
+
+    def forceNewHands(self):
+        for player in self.players:
+            player.newHand()
+        self.dealer.newHand()
+
+    def initPlayers(self, numPlayers):
+        newPlayers = []
+        for _ in range(numPlayers):
+            newPlayers.append(Player(1000, 2, self.decks))
+        sample = rand.sample(names, len(newPlayers))
+        for i, player in enumerate(newPlayers):
+            player.name = sample[i]
+        self.players += newPlayers
 
     def newDecks(self, decks):
         self.decks = decks
 
     def isStraightFlush(self, hand):
         lastVal = None
+        hand.sort()
         for card in hand:
             if lastVal == None:
                 lastVal = card.value
@@ -170,30 +217,27 @@ class Poker:
                 return False
         return True
 
-    def handToScore(self, hand):
+    def handToScore(self, hand, dealerHand):
         """Given a player's hand, returns the highest point score they can make."""
-        scoringCards = hand + self.dealer.hand
+        scoringCards = hand + dealerHand
         hearts = [card for card in scoringCards if card.suit == "Hearts"]
         diamonds = [card for card in scoringCards if card.suit == "Diamonds"]
         spades = [card for card in scoringCards if card.suit == "Spades"]
         clubs = [card for card in scoringCards if card.suit == "Clubs"]
-        scoringSuits = [hearts, diamonds, spades, clubs]
-        for s in scoringSuits:
-            if len(s) == 0:
-                scoringSuits.remove(s)
-
+        scoringSuits = [x for x in [hearts, diamonds, spades, clubs] if x != []]
         ranks = []
         for value in acceptedValues:
             ranks.append([card for card in scoringCards if card.value == value])
+        ranks = [x for x in ranks if x != []]
         bestHand = 0
         for suit in scoringSuits:
             royalFlush = [PlayingCard(suit[0].suit, 1), PlayingCard(suit[0].suit, 13), PlayingCard(suit[0].suit, 12), PlayingCard(suit[0].suit, 11), PlayingCard(suit[0].suit, 10)]
             if len(suit) == 5:
                 # check for royal/straight flush/flush
-                if royalFlush.sort() is suit.sort():
+                if royalFlush.sort() == suit.sort():
                     if bestHand < hands["Royal Flush"]:
                         bestHand = hands["Royal Flush"]
-                elif self.isStraightFlush(scoringCards):
+                elif self.isStraightFlush(suit):
                     if bestHand < hands["Straight Flush"]:
                         bestHand = hands["Straight Flush"]
                 else:
@@ -231,100 +275,87 @@ class Poker:
         return bestHand
 
     def declareWinner(self, players):
-        """Given a list of players, compares their hands against each other
-        (taking into account the dealer's cards) to determine the winner(s)
-        of the hand. Returns a list of winning players."""
-        if len(players) == 1:
-            return [players[0]]
+        """Given a list of players, compares their hands against each other to
+        determine the winner(s) of the hand. Returns a list of winning players."""
         scores = []
         for player in players:
-            scores.append((self.handToScore(player.hand + self.dealer.hand), player))
+            scores.append((self.handToScore(player.hand, self.dealer.hand), player))
         # TODO: enforce suit precedence
-        return [player for score, player in scores if score == max(scores)]
+        allScores = [x for x,_ in scores]
+        return [player for score, player in scores if score == max(allScores)]
 
     def getRichestPlayer(self):
-        richest = None
-        mostMoney = float("-inf")
-        for player in self.players:
-            if player.money > mostMoney:
-                mostMoney = player.money
-                richest = player
-        return player
+        return max(self.players)
+
+    def playRound(self):
+        self.dealer.draw()
+        callVal = self.ante
+        roundComplete = False
+        while not roundComplete:
+            roundComplete = True
+            for player in self.players:
+                # if only one player has not folded, that person wins the round
+                if len([x for x in self.players if not x.hasFolded]) == 1:
+                    break
+                # for each player, select an action based on our agent
+                # the round doesn't end until everyone has called or folded
+                if player.hasFolded:
+                    pass
+                # TODO
+                action = rand.choice(["Call", "Raise"])
+                # if a player cannot at least call, they must fold
+                if player.money < callVal or player.money == 0:
+                    action = "Fold"
+                if action == "Call":
+                    player.bet(callVal, self.pot)
+                if action == "Raise":
+                    amtRaise = 10
+                    player.bet(callVal + amtRaise, self.pot)
+                    callVal += amtRaise
+                    roundComplete = False
+                if action == "Double down":
+                    player.bet(callVal * 2, self.pot)
+                    callVal = callVal * 2
+                    roundComplete = False
+                if action == "All-in":
+                    player.bet(player.money, self.pot)
+                    callVal = player.money
+                    roundComplete = False
+                if action == "Fold":
+                    player.hasFolded = True
+                # print("{} has taken action {} at callVal {}".format(player, action, callVal))
+
 
     def playHand(self):
-        handComplete = False
-        while not handComplete:
-            # at the start of the round, let's see if anyone has won or lost
-            for player in self.players:
-                if player.money <= 0:
-                    self.players.remove(player)
-            if len(self.players) == 1:
-                self.players[0].isWinner = True
-                self.isGameOver = True
-            roundComplete = False
-            roundPlayers = list(self.players)
-            # dealer draws
-            self.dealer.draw()
-            # if the dealer is done drawing, declare winners and start new round
-            if len(self.dealer.hand) > 5 or len(roundPlayers) == 1:
-                self.winningPlayers = self.declareWinner(roundPlayers)
-                handComplete = True
-            # # players receive cards
-            # for player in self.players:
-            #     player.draw()
-            # expose dealer's hand to the players for their decision-making
-            dealerHand = self.dealer.hand
+        # hand is over when dealer hand is 5
+        while not len(self.dealer.hand) == 5:
             # players decide to take an action based on the available information
-            callVal = self.ante
-            roundComplete = False
-            while not roundComplete:
-                roundComplete = True
-                if len(roundPlayers) == 1:
-                    break
-                for player in roundPlayers:
-                    # for each player, select an action based on our agent
-                    # the round doesn't end until everyone has called or folded
-
-                    # TODO
-                    action = rand.choice(legalActions)
-                    # if a player cannot at least call, they must fold
-                    if player.money < callVal or player.money == 0:
-                        action = "Fold"
-                    if action == "Call":
-                        player.bet(callVal)
-                    if action == "Raise":
-                        amtRaise = 1
-                        player.bet(callVal + amtRaise)
-                        callVal += amtRaise
-                        roundComplete = False
-                    if action == "Double down":
-                        player.bet(callVal * 2)
-                        callVal = callVal * 2
-                        roundComplete = False
-                    if action == "All-in":
-                        player.bet(player.money)
-                        callVal = player.money
-                        roundComplete = False
-                    if action == "Fold":
-                        roundPlayers.remove(player)
-
+            self.playRound()
         # payout if we're done with the hand
-        winners = self.winningPlayers
+        winners = self.declareWinner([x for x in self.players if not x.hasFolded])
         self.pot.payOut(winners)
-        if not self.isGameOver:
-            # new dealer hand
-            self.dealer.newHand()
-            # new player hands
-            for player in self.players:
-                player.newHand()
+        # print("{} won the hand".format(winners))
+        self.ante = 1
+        for player in self.players:
+            player.hasFolded = False
+        # at the end of the round, let's see if anyone has won, i.e. all except one has lost
+        # print("players are {}".format(self.players))
+        if len([player for player in self.players if player.money == 0]) == len(self.players) - 1:
+            self.isGameOver = True
+
 
     def playGame(self):
+        self.isGameOver = False
         while not self.isGameOver:
             self.playHand()
+            self.forceNewHands()
         print("game complete! {} won.".format(self.getRichestPlayer()))
-
+        # reset for next game
+        self.ante = 1
+        for player in self.players:
+            player.reset()
 
 if __name__ == "__main__":
-    for _ in range(5):
-        game = Poker(3, [Deck()])
+    game = Poker([Deck()], numPlayers=2)
+    for _ in range(10):
         game.playGame()
