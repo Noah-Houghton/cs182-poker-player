@@ -1,0 +1,95 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{hyperref}
+\usepackage{fixltx2e} % provides \textsubscript
+\usepackage{cleveref}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\PassOptionsToPackage{hyphens}{url} % url is loaded by hyperref
+\usepackage[unicode=true]{hyperref}
+\hypersetup{
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+\title{CS 182: Project Update}
+\author{Philip Thomsen, Kyle Sanok, Noah Houghton, and Matt Mandel}
+\date{November 26, 2018}
+
+\begin{document}
+
+\maketitle
+
+\clearpage
+\textbf{Objective:} Our group will implement an artificial intelligence which learns to play different variants of Poker, specifically the game of 5-card draw, where each player cannot see the other players' hands.
+
+\textbf{Changes from Proposal:} We initially proposed implementing an agent which would play different variants of Blackjack. However, after receiving feedback from Lev, he suggested that with four people we could attempt to make it a bit more challenging by "playing" poker instead. Thus we switched our game to poker.
+
+\textbf{Work Done Thus Far:} At this point in the project, we have fully implemented the functions to simulate a game of 5-card draw in our file "game.py." Our implementation is below:
+\begin{enumerate}
+    \item We defined four suits, different numbers cards can take on, all the legal actions ("Call", "Raise", "Fold", "All-in", "Double Down"), and all the types of "wins" in a hand with their various point scores ("Royal Flush": 32, "Straight Flush": 31, "Four of a Kind": 30, "Full House": 29, "Flush": 28, "Straight": 27, "Three of a Kind": 26, "Two Pair": 25, "Pair" : 24)
+    \item We created a class called PlayingCard. This class is defined by a suit and value. Each card can be one four suits, and each is assigned a number 1-13 (face cards simply became numbers).
+    \item We created a Deck class as well that can "pop" cards from the deck and reshuffles if none are left. We implemented the deck as a stack.
+    \item We then created a Player class that is defined by starting money, the size of their hand, and the decks they get their draws from. In this class we can bet, reset, receive money, draw, get a new hand, and accomplish all the comparisons between two players (greater than, less than, equal to, etc.)
+    \item Further, we defined a class to denote the "pot" which keeps track of the total money that has been bet.
+    \item Lastly, and the most challenging class implemented is our Poker class. In this class, we define the game itself. Initialized with the number of players and decks, you can then reset the game, add decks, then check each players hand for various "wins." Further we implemented a function called handToScore which will return the highest point score possible with given hand. Another function declareWinner will compare hands against each other and return a list of winning players. We can also find the riches player, and play a single "round" of poker or play a hand of poker.
+\end{enumerate}
+
+\textbf{Challenges:} Below are a few of the challenges we ran into:
+\begin{enumerate}
+    \item
+\end{enumerate}
+\textbf{Next Steps:}
+\begin{enumerate}
+    \item test cases for game
+    \item abstract game mechanics for agents
+    \item abstract game mechanics for different versions of poker
+    \item build agent structure
+    \item build Q-learning and MDP agents
+\end{enumerate}
+\end{document}
