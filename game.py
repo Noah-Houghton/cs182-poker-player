@@ -8,6 +8,350 @@ legalActions = ["Call", "Raise", "Fold", "All-in", "Double Down"]
 hands = {"Royal Flush": 32, "Straight Flush": 31, "Four of a Kind": 30, "Full House": 29, "Flush": 28, "Straight": 27, "Three of a Kind": 26, "Two Pair": 25, "Pair" : 24}
 names = ["John", "Alex", "Steve", "Lev", "Herbie", "David", "Eve", "Alyx"]
 
+class Agent:
+    """
+    An agent must define a getAction method, but may also define the
+    following methods which will be called if they exist:
+
+    def registerInitialState(self, state): # inspects the starting state
+    """
+    def __init__(self, index=0):
+        self.index = index
+
+    def getAction(self, state):
+        """
+        The Agent will receive a GameState (from either {pacman, capture, sonar}.py) and
+        must return an action from Directions.{North, South, East, West, Stop}
+        """
+        raiseNotDefined()
+
+class AgentState:
+    """
+    AgentStates hold the state of an agent (configuration, speed, scared, etc).
+    """
+
+    def __init__( self, startConfiguration, isPacman ):
+        self.start = startConfiguration
+        self.configuration = startConfiguration
+        self.isPacman = isPacman
+        self.scaredTimer = 0
+        self.numCarrying = 0
+        self.numReturned = 0
+
+    def __str__( self ):
+        if self.isPacman:
+            return "Pacman: " + str( self.configuration )
+        else:
+            return "Ghost: " + str( self.configuration )
+
+    def __eq__( self, other ):
+        if other == None:
+            return False
+        return self.configuration == other.configuration and self.scaredTimer == other.scaredTimer
+
+    def __hash__(self):
+        return hash(hash(self.configuration) + 13 * hash(self.scaredTimer))
+
+    def copy( self ):
+        state = AgentState( self.start, self.isPacman )
+        state.configuration = self.configuration
+        state.scaredTimer = self.scaredTimer
+        state.numCarrying = self.numCarrying
+        state.numReturned = self.numReturned
+        return state
+
+    def getPosition(self):
+        if self.configuration == None: return None
+        return self.configuration.getPosition()
+
+    def getDirection(self):
+        return self.configuration.getDirection()
+
+class Actions:
+    """
+    A collection of static methods for manipulating move actions.
+    """
+    # Directions
+    _directions = {Directions.NORTH: (0, 1),
+                   Directions.SOUTH: (0, -1),
+                   Directions.EAST:  (1, 0),
+                   Directions.WEST:  (-1, 0),
+                   Directions.STOP:  (0, 0)}
+
+    _directionsAsList = _directions.items()
+
+    TOLERANCE = .001
+
+    def reverseDirection(action):
+        if action == Directions.NORTH:
+            return Directions.SOUTH
+        if action == Directions.SOUTH:
+            return Directions.NORTH
+        if action == Directions.EAST:
+            return Directions.WEST
+        if action == Directions.WEST:
+            return Directions.EAST
+        return action
+    reverseDirection = staticmethod(reverseDirection)
+
+    def vectorToDirection(vector):
+        dx, dy = vector
+        if dy > 0:
+            return Directions.NORTH
+        if dy < 0:
+            return Directions.SOUTH
+        if dx < 0:
+            return Directions.WEST
+        if dx > 0:
+            return Directions.EAST
+        return Directions.STOP
+    vectorToDirection = staticmethod(vectorToDirection)
+
+    def directionToVector(direction, speed = 1.0):
+        dx, dy =  Actions._directions[direction]
+        return (dx * speed, dy * speed)
+    directionToVector = staticmethod(directionToVector)
+
+    def getPossibleActions(config, walls):
+        possible = []
+        x, y = config.pos
+        x_int, y_int = int(x + 0.5), int(y + 0.5)
+
+        # In between grid points, all agents must continue straight
+        if (abs(x - x_int) + abs(y - y_int)  > Actions.TOLERANCE):
+            return [config.getDirection()]
+
+        for dir, vec in Actions._directionsAsList:
+            dx, dy = vec
+            next_y = y_int + dy
+            next_x = x_int + dx
+            if not walls[next_x][next_y]: possible.append(dir)
+
+        return possible
+
+    getPossibleActions = staticmethod(getPossibleActions)
+
+    def getLegalNeighbors(position, walls):
+        x,y = position
+        x_int, y_int = int(x + 0.5), int(y + 0.5)
+        neighbors = []
+        for dir, vec in Actions._directionsAsList:
+            dx, dy = vec
+            next_x = x_int + dx
+            if next_x < 0 or next_x == walls.width: continue
+            next_y = y_int + dy
+            if next_y < 0 or next_y == walls.height: continue
+            if not walls[next_x][next_y]: neighbors.append((next_x, next_y))
+        return neighbors
+    getLegalNeighbors = staticmethod(getLegalNeighbors)
+
+    def getSuccessor(position, action):
+        dx, dy = Actions.directionToVector(action)
+        x, y = position
+        return (x + dx, y + dy)
+    getSuccessor = staticmethod(getSuccessor)
+
+class GameState:
+    """
+    A GameState specifies the full game state, including the food, capsules,
+    agent configurations and score changes.
+
+    GameStates are used by the Game object to capture the actual state of the game and
+    can be used by agents to reason about the game.
+
+    Much of the information in a GameState is stored in a GameStateData object.  We
+    strongly suggest that you access that data via the accessor methods below rather
+    than referring to the GameStateData object directly.
+
+    Note that in classic Pacman, Pacman is always agent 0.
+    """
+
+    ####################################################
+    # Accessor methods: use these to access state data #
+    ####################################################
+
+    # static variable keeps track of which states have had getLegalActions called
+    explored = set()
+    def getAndResetExplored():
+        tmp = GameState.explored.copy()
+        GameState.explored = set()
+        return tmp
+    getAndResetExplored = staticmethod(getAndResetExplored)
+
+    def getLegalActions( self, agentIndex=0 ):
+        """
+        Returns the legal actions for the agent specified.
+        """
+#        GameState.explored.add(self)
+        if self.isWin() or self.isLose(): return []
+
+        if agentIndex == 0:  # Pacman is moving
+            return PacmanRules.getLegalActions( self )
+        else:
+            return GhostRules.getLegalActions( self, agentIndex )
+
+    def generateSuccessor( self, agentIndex, action):
+        """
+        Returns the successor state after the specified agent takes the action.
+        """
+        # Check that successors exist
+        if self.isWin() or self.isLose(): raise Exception('Can\'t generate a successor of a terminal state.')
+
+        # Copy current state
+        state = GameState(self)
+
+        # Let agent's logic deal with its action's effects on the board
+        if agentIndex == 0:  # Pacman is moving
+            state.data._eaten = [False for i in range(state.getNumAgents())]
+            PacmanRules.applyAction( state, action )
+        else:                # A ghost is moving
+            GhostRules.applyAction( state, action, agentIndex )
+
+        # Time passes
+        if agentIndex == 0:
+            state.data.scoreChange += -TIME_PENALTY # Penalty for waiting around
+        else:
+            GhostRules.decrementTimer( state.data.agentStates[agentIndex] )
+
+        # Resolve multi-agent effects
+        GhostRules.checkDeath( state, agentIndex )
+
+        # Book keeping
+        state.data._agentMoved = agentIndex
+        state.data.score += state.data.scoreChange
+        GameState.explored.add(self)
+        GameState.explored.add(state)
+        return state
+
+    def getLegalPacmanActions( self ):
+        return self.getLegalActions( 0 )
+
+    def generatePacmanSuccessor( self, action ):
+        """
+        Generates the successor state after the specified pacman move
+        """
+        return self.generateSuccessor( 0, action )
+
+    def getPacmanState( self ):
+        """
+        Returns an AgentState object for pacman (in game.py)
+
+        state.pos gives the current position
+        state.direction gives the travel vector
+        """
+        return self.data.agentStates[0].copy()
+
+    def getPacmanPosition( self ):
+        return self.data.agentStates[0].getPosition()
+
+    def getGhostStates( self ):
+        return self.data.agentStates[1:]
+
+    def getGhostState( self, agentIndex ):
+        if agentIndex == 0 or agentIndex >= self.getNumAgents():
+            raise Exception("Invalid index passed to getGhostState")
+        return self.data.agentStates[agentIndex]
+
+    def getGhostPosition( self, agentIndex ):
+        if agentIndex == 0:
+            raise Exception("Pacman's index passed to getGhostPosition")
+        return self.data.agentStates[agentIndex].getPosition()
+
+    def getGhostPositions(self):
+        return [s.getPosition() for s in self.getGhostStates()]
+
+    def getNumAgents( self ):
+        return len( self.data.agentStates )
+
+    def getScore( self ):
+        return float(self.data.score)
+
+    def getCapsules(self):
+        """
+        Returns a list of positions (x,y) of the remaining capsules.
+        """
+        return self.data.capsules
+
+    def getNumFood( self ):
+        return self.data.food.count()
+
+    def getFood(self):
+        """
+        Returns a Grid of boolean food indicator variables.
+
+        Grids can be accessed via list notation, so to check
+        if there is food at (x,y), just call
+
+        currentFood = state.getFood()
+        if currentFood[x][y] == True: ...
+        """
+        return self.data.food
+
+    def getWalls(self):
+        """
+        Returns a Grid of boolean wall indicator variables.
+
+        Grids can be accessed via list notation, so to check
+        if there is a wall at (x,y), just call
+
+        walls = state.getWalls()
+        if walls[x][y] == True: ...
+        """
+        return self.data.layout.walls
+
+    def hasFood(self, x, y):
+        return self.data.food[x][y]
+
+    def hasWall(self, x, y):
+        return self.data.layout.walls[x][y]
+
+    def isLose( self ):
+        return self.data._lose
+
+    def isWin( self ):
+        return self.data._win
+
+    #############################################
+    #             Helper methods:               #
+    # You shouldn't need to call these directly #
+    #############################################
+
+    def __init__( self, prevState = None ):
+        """
+        Generates a new state by copying information from its predecessor.
+        """
+        if prevState != None: # Initial state
+            self.data = GameStateData(prevState.data)
+        else:
+            self.data = GameStateData()
+
+    def deepCopy( self ):
+        state = GameState( self )
+        state.data = self.data.deepCopy()
+        return state
+
+    def __eq__( self, other ):
+        """
+        Allows two states to be compared.
+        """
+        return hasattr(other, 'data') and self.data == other.data
+
+    def __hash__( self ):
+        """
+        Allows states to be keys of dictionaries.
+        """
+        return hash( self.data )
+
+    def __str__( self ):
+
+        return str(self.data)
+
+    def initialize( self, layout, numGhostAgents=1000 ):
+        """
+        Creates an initial game state from a layout array (see layout.py).
+        """
+        self.data.initialize(layout, numGhostAgents)
+
 
 class PlayingCard:
 
