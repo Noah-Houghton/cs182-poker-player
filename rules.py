@@ -1,10 +1,22 @@
+from game import GameState
+from game import Game
 
-class Actions:
 
-    def getLegalActions(self, player):
-        # TODO
-        pass
+"""
+Common set of functions for rules
+"""
+class Rules:
 
+    def newGame( self, playerAgent, opponentAgents, quiet = False, catchExceptions=False):
+        # agents = [pacmanAgent] + ghostAgents[:layout.getNumGhosts()]
+        agents = [playerAgent] + opponentAgents
+        initState = GameState()
+        initState.initialize()
+        game = Game(agents, self, catchExceptions=catchExceptions)
+        game.state = initState
+        self.initialState = initState.deepCopy()
+        self.quiet = quiet
+        return game
 
 
 class ClassicGameRules:
