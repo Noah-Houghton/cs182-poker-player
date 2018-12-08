@@ -3,153 +3,28 @@
 import random as rand
 
 suits = ["Diamonds", "Hearts", "Spades", "Clubs"]
-acceptedValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+cardValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 legalActions = ["Call", "Raise", "Fold", "All-in", "Double Down"]
 hands = {"Royal Flush": 32, "Straight Flush": 31, "Four of a Kind": 30, "Full House": 29, "Flush": 28, "Straight": 27, "Three of a Kind": 26, "Two Pair": 25, "Pair" : 24}
 names = ["John", "Alex", "Steve", "Lev", "Herbie", "David", "Eve", "Alyx"]
 
-class Agent:
-    """
-    An agent must define a getAction method, but may also define the
-    following methods which will be called if they exist:
-
-    def registerInitialState(self, state): # inspects the starting state
-    """
-    def __init__(self, index=0):
-        self.index = index
-
-    def getAction(self, state):
-        """
-        The Agent will receive a GameState (from either {pacman, capture, sonar}.py) and
-        must return an action from Directions.{North, South, East, West, Stop}
-        """
-        raiseNotDefined()
-
-class AgentState:
-    """
-    AgentStates hold the state of an agent (configuration, speed, scared, etc).
-    """
-
-    def __init__( self, startConfiguration, isPacman ):
-        self.start = startConfiguration
-        self.configuration = startConfiguration
-        self.isPacman = isPacman
-        self.scaredTimer = 0
-        self.numCarrying = 0
-        self.numReturned = 0
-
-    def __str__( self ):
-        if self.isPacman:
-            return "Pacman: " + str( self.configuration )
-        else:
-            return "Ghost: " + str( self.configuration )
-
-    def __eq__( self, other ):
-        if other == None:
-            return False
-        return self.configuration == other.configuration and self.scaredTimer == other.scaredTimer
-
-    def __hash__(self):
-        return hash(hash(self.configuration) + 13 * hash(self.scaredTimer))
-
-    def copy( self ):
-        state = AgentState( self.start, self.isPacman )
-        state.configuration = self.configuration
-        state.scaredTimer = self.scaredTimer
-        state.numCarrying = self.numCarrying
-        state.numReturned = self.numReturned
-        return state
-
-    def getPosition(self):
-        if self.configuration == None: return None
-        return self.configuration.getPosition()
-
-    def getDirection(self):
-        return self.configuration.getDirection()
 
 class Actions:
-    """
-    A collection of static methods for manipulating move actions.
-    """
-    # Directions
-    _directions = {Directions.NORTH: (0, 1),
-                   Directions.SOUTH: (0, -1),
-                   Directions.EAST:  (1, 0),
-                   Directions.WEST:  (-1, 0),
-                   Directions.STOP:  (0, 0)}
 
-    _directionsAsList = _directions.items()
+    FOLD = "Fold"
+    CALL = "Call"
+    RAISE = "Raise"
+    ALL_IN = "All-in"
+    DDOWN = "Double Down"
 
-    TOLERANCE = .001
+    actionsAsList = [FOLD, CALL, RAISE, ALL_IN, DDOWN]
 
-    def reverseDirection(action):
-        if action == Directions.NORTH:
-            return Directions.SOUTH
-        if action == Directions.SOUTH:
-            return Directions.NORTH
-        if action == Directions.EAST:
-            return Directions.WEST
-        if action == Directions.WEST:
-            return Directions.EAST
-        return action
-    reverseDirection = staticmethod(reverseDirection)
 
-    def vectorToDirection(vector):
-        dx, dy = vector
-        if dy > 0:
-            return Directions.NORTH
-        if dy < 0:
-            return Directions.SOUTH
-        if dx < 0:
-            return Directions.WEST
-        if dx > 0:
-            return Directions.EAST
-        return Directions.STOP
-    vectorToDirection = staticmethod(vectorToDirection)
+class PokerRules:
+    def getLegalActions(self, gameState):
+        pass
 
-    def directionToVector(direction, speed = 1.0):
-        dx, dy =  Actions._directions[direction]
-        return (dx * speed, dy * speed)
-    directionToVector = staticmethod(directionToVector)
 
-    def getPossibleActions(config, walls):
-        possible = []
-        x, y = config.pos
-        x_int, y_int = int(x + 0.5), int(y + 0.5)
-
-        # In between grid points, all agents must continue straight
-        if (abs(x - x_int) + abs(y - y_int)  > Actions.TOLERANCE):
-            return [config.getDirection()]
-
-        for dir, vec in Actions._directionsAsList:
-            dx, dy = vec
-            next_y = y_int + dy
-            next_x = x_int + dx
-            if not walls[next_x][next_y]: possible.append(dir)
-
-        return possible
-
-    getPossibleActions = staticmethod(getPossibleActions)
-
-    def getLegalNeighbors(position, walls):
-        x,y = position
-        x_int, y_int = int(x + 0.5), int(y + 0.5)
-        neighbors = []
-        for dir, vec in Actions._directionsAsList:
-            dx, dy = vec
-            next_x = x_int + dx
-            if next_x < 0 or next_x == walls.width: continue
-            next_y = y_int + dy
-            if next_y < 0 or next_y == walls.height: continue
-            if not walls[next_x][next_y]: neighbors.append((next_x, next_y))
-        return neighbors
-    getLegalNeighbors = staticmethod(getLegalNeighbors)
-
-    def getSuccessor(position, action):
-        dx, dy = Actions.directionToVector(action)
-        x, y = position
-        return (x + dx, y + dy)
-    getSuccessor = staticmethod(getSuccessor)
 
 class GameState:
     """
@@ -186,11 +61,9 @@ class GameState:
         if self.isWin() or self.isLose(): return []
 
         if agentIndex == 0:  # Pacman is moving
-            return PacmanRules.getLegalActions( self )
-        else:
-            return GhostRules.getLegalActions( self, agentIndex )
+            return PokerRules.getLegalActions( self )
 
-    def generateSuccessor( self, agentIndex, action):
+    def generateSuccessor( self, action):
         """
         Returns the successor state after the specified agent takes the action.
         """
@@ -201,36 +74,21 @@ class GameState:
         state = GameState(self)
 
         # Let agent's logic deal with its action's effects on the board
-        if agentIndex == 0:  # Pacman is moving
-            state.data._eaten = [False for i in range(state.getNumAgents())]
-            PacmanRules.applyAction( state, action )
-        else:                # A ghost is moving
-            GhostRules.applyAction( state, action, agentIndex )
-
-        # Time passes
-        if agentIndex == 0:
-            state.data.scoreChange += -TIME_PENALTY # Penalty for waiting around
-        else:
-            GhostRules.decrementTimer( state.data.agentStates[agentIndex] )
-
-        # Resolve multi-agent effects
-        GhostRules.checkDeath( state, agentIndex )
+        PokerRules.applyAction( state, action )
 
         # Book keeping
-        state.data._agentMoved = agentIndex
-        state.data.score += state.data.scoreChange
         GameState.explored.add(self)
         GameState.explored.add(state)
         return state
 
-    def getLegalPacmanActions( self ):
+    def getLegalPokerActions( self ):
         return self.getLegalActions( 0 )
 
-    def generatePacmanSuccessor( self, action ):
+    def generatePokerSuccessor( self, action ):
         """
         Generates the successor state after the specified pacman move
         """
-        return self.generateSuccessor( 0, action )
+        return self.generateSuccessor( action )
 
     def getPacmanState( self ):
         """
@@ -356,7 +214,7 @@ class GameState:
 class PlayingCard:
 
     def __init__(self, suit, value):
-        if suit not in suits or value not in acceptedValues:
+        if suit not in suits or value not in cardValues:
             return ValueError
         self.suit = suit
         self.value = value
@@ -398,7 +256,7 @@ class PlayingCard:
 
 class Deck:
 
-    def __init__(self, vals=acceptedValues, suits=suits):
+    def __init__(self, vals=cardValues, suits=suits):
         self.cards = []
         for val in vals:
             for suit in suits:
@@ -570,7 +428,7 @@ class Poker:
         clubs = [card for card in scoringCards if card.suit == "Clubs"]
         scoringSuits = [x for x in [hearts, diamonds, spades, clubs] if x != []]
         ranks = []
-        for value in acceptedValues:
+        for value in cardValues:
             ranks.append([card for card in scoringCards if card.value == value])
         ranks = [x for x in ranks if x != []]
         bestHand = 0

@@ -3,12 +3,124 @@
 MDP
 We define the set of states in our MDP version of this agent as the cards the player has available to them, the money the player has left, and the money in the pot.
 Set of States S:
-    -
+    - boolean playerInRound
+    - float currentBet
+    - int numPlayersInRound
 
+Set of Actions A:
+    - fold
+    - raise
+    - call
+    - double down
+    - all-in
+
+Transitions
+    - fold sends players to a terminal state
+    - raise increases currentBet
+    - call, currentBet remains the same
+    - double down, currentBet doubles
+    - all-in, currentBet = allMoney
+    TODO: how do these transitions affect numPlayersInRound and playerInRound? do they have to?
 
 """
 
-from game import agent
+
+
+class Configuration:
+    """
+    A Configuration holds information about the agent's current status in the game space.
+    """
+
+    def __init__(self, hand, money, recentBet):
+        self.hand = hand
+        self.money = money
+        self.bet = recentBet
+
+    def getMoney(self):
+        return self.money
+
+    def getHand(self):
+        return self.hand
+
+    def getAggression(self):
+        return self.aggression
+
+    def __eq__(self, other):
+        if other == None: return False
+        return (self.hand == other.hand and self.money == other.money)
+
+    def __hash__(self):
+        x = hash(self.hand)
+        y = hash(self.money)
+        return hash(x + 13 * y)
+
+    def __str__(self):
+
+        return "Hand: "+str(self.hand)+"\nCash="+str(self.money)+"\nLatest Bet="+str(self.bet)
+
+    def generateSuccessor(self, bet, card=None):
+        """
+        Generates a new configuration reached by translating the current
+        configuration by the action vector. This is a low-level call and does
+        not attempt to respect the legality of the movement.
+
+        Bet is the amount of money the player is betting; card is to be added to the hand, if applicable
+        """
+
+        if not card == None: return Configuration(self.hand.addCard(card), self.money - bet, bet)
+        return Configuration(self.hand, self.money - bet, bet)
+
+class AgentState:
+    """
+    AgentStates hold the state of an agent (configuration, speed, scared, etc).
+    """
+
+    def __init__( self, startConfiguration ):
+        self.start = startConfiguration
+        self.configuration = startConfiguration
+
+    def __str__( self ):
+        return "Player: " + str( self.configuration )
+
+    def __eq__( self, other ):
+        if other == None:
+            return False
+        return self.configuration == other.configuration
+
+    def __hash__(self):
+        return hash(hash(self.configuration) + 13 * hash(self.scaredTimer))
+
+    def copy( self ):
+        state = AgentState( self.start )
+        state.configuration = self.configuration
+        return state
+
+
+    def getHand(self):
+        if self.configuration == None: return None
+        return self.configuration.getHand()
+
+    def getMoney(self):
+        if self.configuration == None: return None
+        return self.configuration.getMoney()
+
+
+class Agent:
+    """
+    An agent must define a getAction method, but may also define the
+    following methods which will be called if they exist:
+
+    def registerInitialState(self, state): # inspects the starting state
+    """
+    def __init__(self, index=0):
+        self.index = index
+
+    def getAction(self, state):
+        """
+        The Agent will receive a GameState and must return a poker action.
+        """
+        raiseNotDefined()
+
 
 class MultiAgentSearchAgent(Agent):
     """
@@ -27,9 +139,9 @@ class MultiAgentSearchAgent(Agent):
 
     def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
         self.index = 0 # Pacman is always agent index 0
-        self.evaluationFunction =
+        self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
-        self.bestAction =
+        self.bestAction = (float("-inf"), Actions.FOLD)
 
 
 class MinimaxAgent(MultiAgentSearchAgent):
