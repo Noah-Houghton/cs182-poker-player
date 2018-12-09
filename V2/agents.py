@@ -42,7 +42,6 @@ class ReflexAgent(Agent):
         """
         # Collect legal moves and successor states
         legalMoves = gameState.getLegalActions()
-        print(legalMoves)
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
@@ -51,6 +50,7 @@ class ReflexAgent(Agent):
 
         "Add more of your code here if you want to"
 
+        # print("agent chose {}".format(legalMoves[chosenIndex]))
         return legalMoves[chosenIndex]
 
     def evaluationFunction(self, currentGameState, action):
