@@ -2,29 +2,87 @@ import util
 import agents
 import random
 
+# define points per hand as constants
+ROYALFLUSH = 32
+STRAIGHTFLUSH = ROYALFLUSH - 1
+FOUROFAKIND = STRAIGHTFLUSH - 1
+FULLHOUSE = FOUROFAKIND - 1
+FLUSH = FULLHOUSE - 1
+STRAIGHT = FLUSH - 1
+THREEOFAKIND = STRAIGHT - 1
+TWOPAIR = THREEOFAKIND - 1
+PAIR = TWOPAIR - 1
+
 
 """
 Common set of functions for rules
 """
 class Rules:
 
-    def newGame( self, playerAgent, opponentAgents, quiet = False, catchExceptions=False):
+    def newGame( self, playerAgent, opponentAgents, dealer, quiet = False, catchExceptions=False):
         # agents = [pacmanAgent] + ghostAgents[:layout.getNumGhosts()]
         agents = [playerAgent] + opponentAgents
         initState = GameState()
-        initState.initialize(len(agents) - 1)
+        initState.initialize(len(agents) - 1, dealer)
         game = Game(agents, self, catchExceptions=catchExceptions)
         game.state = initState
         self.initialState = initState.deepCopy()
         self.quiet = quiet
+        totalMoney = sum([astate.player.money for astate in initState.data.agentStates])
+        print("setting total money to {}".format(totalMoney))
+        game.state.winningMoney = totalMoney
+        print("getWinningMoney = {}".format(game.state.getWinningMoney()))
         return game
+
+    def isRoyalFlush(cards):
+        royalFlush = [0, 10, 11, 12, 13]
+        for c in cards:
+            if c[0] in royalFlush:
+                royalFlush.remove(c[0])
+            else:
+                return False
+        return True
+    isRoyalFlush = staticmethod(isRoyalFlush)
+
+    def isFlush(cards):
+        cards.sort()
+        val = cards[0][0] - 1
+        for c in cards:
+            if c[0] == val+1:
+                val+=1
+            else:
+                return False
+        return True
+    isFlush = staticmethod(isFlush)
+
+    def highCard(hand):
+        return max([card[0] for card in hand])
+    highCard = staticmethod(highCard)
+
+    def getWinningMoney(self):
+        return self.winningMoney
 
     def process(self, state, game):
         """
         Checks to see whether it is time to end the current phase of the game.
         """
+        if game.rules.handOver(state):
+            print("\n\n The Round is Over! \n \n")
+            victors = game.rules.determineVictors(game, state)
+            dealer = state.getDealer()
+            dealer.payOut(victors)
+            state.data.oneRound = False
+            for agentState in state.data.agentStates:
+                if agentState.player.index == 0:
+                    PlayerRules.newHand(state)
+                    PlayerRules.checkBank(state)
+                else:
+                    OpponentRules.newHand(state, agentState.player.index)
+                    OpponentRules.checkBank(state, agentState.player.index)
         if state.isWin(): self.win(state, game)
         if state.isLose(): self.lose(state, game)
+        state.getDealer().hitTable()
+        state.data.oneRound = True
     #     if state.isRoundEnd(): self.roundEnd(state, game)
     #     if state.isHandEnd(): self.handEnd(state, game)
     #
@@ -33,14 +91,38 @@ class Rules:
     #
     # def handEnd(self, state, game):
     #     game.handComplete = True
-
     def win( self, state, game ):
-        # if not self.quiet: print "Pacman emerges victorious! Score: %d" % state.data.score
+        if not self.quiet: print "Player emerges victorious! Score: %d" % state.data.score
         game.gameOver = True
 
     def lose( self, state, game ):
-        # if not self.quiet: print "Pacman died! Score: %d" % state.data.score
+        if not self.quiet: print "Player Lost! Score: %d" % state.data.score
         game.gameOver = True
+
+    def determineVictors(game, gameState):
+        agentStates = gameState.data.agentStates
+        handsAndPlayers = []
+        maxScore = float("-inf")
+        bestPlayers = []
+        atLeastOneRound = gameState.data.oneRound
+        for astate in agentStates:
+            if atLeastOneRound:
+                if astate.player.isActive:
+                    handsAndPlayers.append((astate.player.getHand(), astate.player))
+            else:
+                handsAndPlayers.append((astate.player.getHand(), astate.player))
+        # print("determing victors out of {}".format(handsAndPlayers))
+        for hand in handsAndPlayers:
+            score = game.rules.evaluateHand(hand[0])
+            # print("hand score = {}".format(score))
+            maxScore = max(maxScore, score)
+        for hand in handsAndPlayers:
+            score = game.rules.evaluateHand(hand[0])
+            if score == maxScore:
+                bestPlayers.append(hand[1])
+        return bestPlayers
+
+    determineVictors = staticmethod( determineVictors )
 
 
 """
@@ -48,33 +130,205 @@ Defines a set of rules by which the player operates
 """
 class PlayerRules(Rules):
 
-    def getLegalActions(self):
-        pass
+    def getLegalActions(state):
+        return Actions.getPossibleActions(state.getPlayerState())
     getLegalActions = staticmethod( getLegalActions )
 
-    def applyAction(self, state, action):
-        pass
+    def newHand(state):
+        print("new hand for player")
+        dealer = state.getDealer()
+        state.data.agentStates[0].player.newHand()
+        dealer.newTable()
+    newHand = staticmethod(newHand)
+
+
+    def applyAction(state, action):
+        player = state.getPlayerState().player
+        if action is "Fold":
+            player.fold()
+        elif action is "Raise":
+            # TODO: encode raise amt
+            r = min(10, player.money)
+            player.bet(player.dealer.getCallAmt() + r)
+        elif action is "Call":
+            player.bet(player.dealer.getCallAmt())
+        elif action is "Double down":
+            player.bet(player.dealer.getCallAmt() * 2)
+        elif action is "All-in":
+            player.bet(player.money)
     applyAction = staticmethod( applyAction )
+
+    def evaluateHand(hand):
+        diamonds = selectSuite(hand, "Diamonds")
+        hearts = selectSuite(hand, "Hearts")
+        clubs = selectSuite(hand, "Clubs")
+        spades = selectSuite(hand, "Spades")
+        suits = [diamonds, hearts, clubs, spades]
+        nums = [selectValue(hand, i) for i in range(1, 14)]
+
+        bestScore = 0
+        hasPair = False
+        hasTOK = False
+        for num in nums:
+            if len(num) == 4:
+                bestScore = max(FOUROFAKIND, bestScore)
+            if len(num) == 3:
+                hasTOK = True
+                if hasPair:
+                    bestScore = max(FULLHOUSE, bestScore)
+                else:
+                    bestScore = max(THREEOFAKIND, bestScore)
+            if len(num) == 2:
+                if hasTOK:
+                    bestScore = max(FULLHOUSE, bestScore)
+                elif hasPair:
+                    bestScore = max(TWOPAIR, bestScore)
+                else:
+                    bestScore = max(PAIR, bestScore)
+                hasPair = True
+        for suit in suits:
+            if len(suit) == 5:
+                if Rules.isRoyalFlush(suit):
+                    bestScore = max(ROYALFLUSH, bestScore)
+                elif Rules.isStraightFlush(suit):
+                    bestScore = max(STRAIGHTFLUSH, bestScore)
+                else:
+                    bestScore = max(FLUSH, bestScore)
+        return max(Rules.highCard(hand), bestScore)
+    evaluateHand = staticmethod(evaluateHand)
+
+    def handOver(state):
+        if len(state.getDealer().getTable()) == 5:
+            print("full 5 cards on the table")
+            return True
+        active = 0
+        for astate in state.data.agentStates:
+            if astate.player.isActive:
+                active += 1
+        if active <= 1:
+            print("only one player remains")
+            return True
+        print("hand continues")
+        return False
+    handOver = staticmethod(handOver)
+
+    def checkBank(gameState):
+        print("we're takin it to the bank")
+        currentMoney = gameState.getPlayerMoney()
+        gameState.data.score = currentMoney
+        print("Player money: {} of {}".format(currentMoney, gameState.getWinningMoney()))
+        if currentMoney <= 0:
+            gameState.data.lose = True
+        if currentMoney == gameState.getWinningMoney():
+            gameState.data.win = True
+    checkBank = staticmethod( checkBank )
 
 """
 Defines a set of rules by which the opponents operate
 """
 class OpponentRules(Rules):
-    def getLegalActions(self, agentIndex):
-        pass
+    def getLegalActions(agentIndex):
+        return Actions.getPossibleActions(state.getPlayerState())
     getLegalActions = staticmethod( getLegalActions )
 
-    def applyAction(self, state, action, agentIndex):
-        pass
+    def newHand(state, agentIndex):
+        print("new opponent hand")
+        dealer = state.getDealer()
+        state.data.agentStates[agentIndex].player.newHand()
+        dealer.newTable()
+    newHand = staticmethod(newHand)
+
+    def applyAction(state, action, agentIndex):
+        player = state.getOpponentState(agentIndex).player
+        if action is "Fold":
+            player.fold()
+        elif action is "Raise":
+            # TODO: encode raise amt in action
+            r = min(10, player.money)
+            player.bet(player.dealer.getCallAmt() + r)
+        elif action is "Call":
+            player.bet(player.dealer.getCallAmt())
+        elif action is "Double down":
+            player.bet(player.getCallAmt() * 2)
+        elif action is "All-in":
+            player.bet(player.money)
     applyAction = staticmethod( applyAction )
+
+    def evaluateHand(hand):
+        diamonds = selectSuite(hand, "Diamonds")
+        hearts = selectSuite(hand, "Hearts")
+        clubs = selectSuite(hand, "Clubs")
+        spades = selectSuite(hand, "Spades")
+        suits = [diamonds, hearts, clubs, spades]
+        nums = [selectValue(hand, i) for i in range(1, 14)]
+
+        bestScore = 0
+        hasPair = False
+        hasTOK = False
+        for num in nums:
+            if len(num) == 4:
+                bestScore = max(FOUROFAKIND, bestScore)
+            if len(num) == 3:
+                hasTOK = True
+                if hasPair:
+                    bestScore = max(FULLHOUSE, bestScore)
+                else:
+                    bestScore = max(THREEOFAKIND, bestScore)
+            if len(num) == 2:
+                if hasTOK:
+                    bestScore = max(FULLHOUSE, bestScore)
+                elif hasPair:
+                    bestScore = max(TWOPAIR, bestScore)
+                else:
+                    bestScore = max(PAIR, bestScore)
+                hasPair = True
+        for suit in suits:
+            if len(suit) == 5:
+                if Rules.isRoyalFlush(suit):
+                    bestScore = max(ROYALFLUSH, bestScore)
+                elif Rules.isStraightFlush(suit):
+                    bestScore = max(STRAIGHTFLUSH, bestScore)
+                else:
+                    bestScore = max(FLUSH, bestScore)
+        return max(Rules.highCard(hand), bestScore)
+    evaluateHand = staticmethod(evaluateHand)
+
+    def checkBank(state, agentIndex):
+        currentMoney = state.data.agentStates[agentIndex].getMoney()
+        print("Opponent money: {} \\ {}".format(currentMoney, state.getWinningMoney()))
+        if currentMoney <= 0:
+            state.data.lose = True
+        if currentMoney == state.getWinningMoney():
+            state.data.win = True
+    checkBank = staticmethod( checkBank )
 
 
 class Actions:
-    CL = "Call"
-    FLD = "Fold"
-    RS = "Raise"
-    DD = "Double Down"
-    AI = "All-In"
+
+    def getPossibleActions(agentState):
+        money = agentState.player.getMoney()
+        print("player money {}".format(money))
+        currentBet = agentState.player.dealer.getCallAmt()
+        currentBet = max(agentState.player.dealer.getAnte(), currentBet)
+        print("current bet {}".format(currentBet))
+        CL = "Call"
+        FLD = "Fold"
+        RS = "Raise"
+        DD = "Double Down"
+        AI = "All-In"
+        actionList = [FLD]
+        if 0 > money - currentBet:
+            return actionList
+        if money >= currentBet:
+            actionList += [CL, AI]
+        if money > currentBet:
+            if money > 2 * currentBet:
+                actionList += [RS, DD]
+            else:
+                actionList.append(RS)
+        return actionList
+    getPossibleActions = staticmethod(getPossibleActions)
+
 
 def Suite(shorthand):
         if shorthand == "H":
@@ -131,7 +385,7 @@ class Deck:
         self.discardedCards = []
 
     def returnCards(self, cards):
-        discardedCards += cards
+        self.discardedCards += cards
 
     def __str__(self):
         repr = "\nDiamonds:"+str(selectSuite(self.cards, "Diamonds"))+"\nClubs:"+str(selectSuite(self.cards, "Clubs"))+"\nSpades:"+str(selectSuite(self.cards, "Spades"))+"\nHearts:"+str(selectSuite(self.cards, "Hearts"))
@@ -145,22 +399,54 @@ class Dealer:
         else:
             self.deck = deck
         self.pot = 0
+        self.startingHouseSize = startingHouseSize
         self.table = self.dealHand(startingHouseSize)
+        self.callAmt = 0
+        self.ante = 5
+
+    def getAnte(self):
+        return self.ante
+
+    def getTable(self):
+        return self.table
 
     def payOut(self, players):
         if len(players) == 1:
+            print("{} won the pot of {}".format(players[0], self.pot))
             players[0].addMoney(self.pot)
+            # print("Money is now {}".format(players[0].getMoney()))
         else:
             # split pot if it's a tie
             for i in range(len(players)):
+                # print("{} receiving {}".format(players[i], self.pot/len(players)))
                 players[i].addMoney(self.pot/len(players))
         self.pot = 0
+        self.callAmt = 0
+
+    def newTable(self):
+        self.returnCards(self.table)
+        self.resetCall(5)
+        self.table = self.dealHand(self.startingHouseSize)
+
+    def dealNewHand(self, oldCards, size=2):
+        self.returnCards(oldCards)
+        return self.dealHand(size)
 
     def dealHand(self, size=2):
         return [self.deck.draw() for _ in range(size)]
 
+    def updateCall(self, amount):
+        callAmt = max(self.callAmt, amount)
+
+    def resetCall(self, ante=5):
+        self.ante = ante
+        callAmt = self.ante
+
     def dealCard(self):
         return self.deck.draw()
+
+    def hitTable(self):
+        self.table.append(self.dealCard())
 
     def returnCards(self, cards):
         self.deck.returnCards(cards)
@@ -168,35 +454,65 @@ class Dealer:
     def endRound(self):
         self.table += self.deck.draw()
 
+    def getCallAmt(self):
+        return self.callAmt
+
     def __str__(self):
         return "Deck: "+str(self.deck) + "\nCurrent Table: " + str(self.table) + "\nCurrent pot: " + str(self.pot)
 
 class Player:
-    def __init__(self, dealer, startingMoney=1000, openingHand=None):
+    def __init__(self, dealer, index, startingMoney=1000, openingHand=None):
         self.money = startingMoney
         self.dealer = dealer
+        self.index = index
         if openingHand == None:
             self.hand = dealer.dealHand()
         else:
             self.hand = openingHand
         self.latestBet = 0
+        self.isActive = True
 
     def addMoney(self, amount):
         self.money += amount
 
     def newHand(self):
-        self.dealer.returnCards(self.hand)
-        self.hand = self.dealer.dealHand()
+        self.isActive = True
+        newHand = self.dealer.dealNewHand(self.hand)
+        self.hand = newHand
 
     def bet(self, amount):
         # assumes that amount can be bet
+        self.isActive = True
         self.money -= amount
         self.dealer.pot += amount
         self.latestBet = amount
+        self.dealer.updateCall(amount)
+
+    def fold(self):
+        self.latestBet = 0
+        self.isActive = False
+
+    def getLatestBet(self):
+        return self.latestBet
+
+    def getMoney(self):
+        return self.money
+
+    def getHand(self):
+        return self.hand
+
+    def getDealer(self):
+        return self.dealer
 
     def __str__(self):
-        return "Player hand: " + str(self.hand) + "\nPlayer Money: " + str(self.money) + "\nMost Recent Bet: " + str(self.latestBet)
+        if self.isActive:
+            header = "Active"
+        else:
+            header = "Inactive"
+        return header + " Player {} hand: ".format(self.index) + str(self.hand) + "\nPlayer Money: " + str(self.money) + "\nMost Recent Bet: " + str(self.latestBet)
 
+    def __hash__(self):
+        return hash(hash(self.money) * hash(self.hand[0]))
 
 class GameStateData:
     def __init__( self, prevState = None, dealer = Dealer() ):
@@ -207,9 +523,9 @@ class GameStateData:
             self.agentStates = self.copyAgentStates( prevState.agentStates )
         self.lose = False
         self.win = False
-        self.isHandEnd = False
-        self.isRoundEnd = False
         self.score = 0
+        self.oneRound = False
+        self.winningMoney = 0
 
     def deepCopy( self ):
         state = GameStateData( self )
@@ -230,28 +546,75 @@ class GameStateData:
         if not self.agentStates == other.agentStates: return False
         return True
 
-    def initialize(self, numOpponentAgents):
+    def __hash__(self):
+        return hash(hash(self.score) * hash(self.agentStates[0]))
+
+    def initialize(self, numOpponentAgents, dealer):
         self.agentStates = []
         numPlayers = 0
-        for i in range(numOpponentAgents):
-            if numPlayers == numOpponentAgents: continue # Max ghosts reached already
+        for i in range(numOpponentAgents+1):
+            print("init agent {}".format(i))
+            if numPlayers == numOpponentAgents+1: continue # Max ghosts reached already
             else: numPlayers += 1
-            self.agentStates.append( AgentState(isPlayer, Player(dealer)))
+            player = Player(dealer, i)
+            print("Player money: {}".format(player.getMoney()))
+            self.winningMoney += player.money
+            self.agentStates.append( AgentState(i==0, player))
+
+class AgentState:
+    """
+    AgentStates hold the state of an agent (configuration, speed, scared, etc).
+    """
+
+    def __init__( self, isPlayer, player ):
+        self.isPlayer = isPlayer
+        self.player = player
+
+    def __str__( self ):
+        if self.isPlayer:
+            return "player: " + str( self.player )
+        else:
+            return "opponent: " + str( self.player )
+
+    def __eq__( self, other ):
+        if other == None:
+            return False
+        return self.player == other.player
+
+    def __hash__(self):
+        return hash(self.player)
+
+    def copy( self ):
+        state = AgentState( self.isPlayer, self.player )
+        return state
+
+    def getMoney(self):
+        return self.player.getMoney()
+
+    def getBet(self):
+        return self.player.getBet()
+
+    def getHand(self):
+        return self.player.getHand()
+
+    def getDealer(self):
+        return self.player.getDealer()
+
 
 class GameState:
 
     # static variable to keep track of visited States
-    explore = set()
+    explored = set()
 
     def getAndResetExplored():
         tmp = GameState.explored.copy()
-        GameState.explore = set()
+        GameState.explored = set()
         return tmp
     getAndResetExplored = staticmethod(getAndResetExplored)
 
 
-    def initialize(self, numOpponents):
-        self.data.initialize(numOpponents)
+    def initialize(self, numOpponents, dealer):
+        self.data.initialize(numOpponents, dealer)
 
     def getLegalActions(self, agentIndex=0):
         """
@@ -296,14 +659,23 @@ class GameState:
     def isHandEnd(self):
         return self.data.handEnd
 
+    def isAtLeastOneRound(self):
+        return self.data.oneRound
+
     def getPlayerState( self ):
         """
         Returns an AgentState object for player
         """
         return self.data.agentStates[0].copy()
 
+    def getWinningMoney(self):
+        return self.data.winningMoney
+
     def getPlayerMoney( self ):
         return self.data.agentStates[0].getMoney()
+
+    def getPlayerBet(self):
+        return self.data.agentStates[0].getBet()
 
     def getPlayerHand(self):
         return self.data.agentStates[0].getHand()
@@ -329,6 +701,9 @@ class GameState:
 
     def getScore( self ):
         return float(self.data.score)
+
+    def getDealer(self):
+        return self.data.agentStates[0].getDealer()
 
     def __init__( self, prevState = None ):
         """
@@ -466,8 +841,10 @@ class Game:
 
         agentIndex = self.startingIndex
         numAgents = len( self.agents )
+        print("we're running!")
 
         while not self.gameOver:
+            print("loop beginning for agent {}".format(agentIndex))
             # Fetch the next agent
             agent = self.agents[agentIndex]
             move_time = 0
@@ -541,6 +918,7 @@ class Game:
             else:
                 action = agent.getAction(observation)
             self.unmute()
+            print(action)
 
             # Execute the action
             self.moveHistory.append( (agentIndex, action) )

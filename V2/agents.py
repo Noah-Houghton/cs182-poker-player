@@ -1,40 +1,5 @@
 import util
-
-
-class AgentState:
-    """
-    AgentStates hold the state of an agent (configuration, speed, scared, etc).
-    """
-
-    def __init__( self, isPlayer, player ):
-        self.isPlayer = isPlayer
-        self.player = player
-
-    def __str__( self ):
-        if self.isPlayer:
-            return "player: " + str( self.player )
-        else:
-            return "opponent: " + str( self.player )
-
-    def __eq__( self, other ):
-        if other == None:
-            return False
-        return self.player == other.player
-
-    def __hash__(self):
-        return hash(hash(self.configuration) + 13 * hash(self.scaredTimer))
-
-    def copy( self ):
-        state = AgentState( self.isPlayer, self.player )
-        return state
-
-    def getMoney(self):
-        if self.configuration == None: return None
-        return self.player.getMoney()
-
-    def getHand(self):
-        return self.player.getHand()
-
+import random
 
 class Agent:
         """
@@ -77,7 +42,7 @@ class ReflexAgent(Agent):
         """
         # Collect legal moves and successor states
         legalMoves = gameState.getLegalActions()
-
+        print(legalMoves)
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
@@ -106,8 +71,8 @@ class ReflexAgent(Agent):
         # Useful information you can extract from a GameState (pacman.py)
         successorGameState = currentGameState.generatePlayerSuccessor(action)
 
-        newMoney = successorGameState.getMoney()
-        newHand = successorGameState.getHand()
+        newMoney = successorGameState.getPlayerMoney()
+        newHand = successorGameState.getPlayerHand()
 
         "*** YOUR CODE HERE ***"
         return successorGameState.getScore()
