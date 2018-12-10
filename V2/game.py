@@ -195,23 +195,23 @@ class Rules:
         for astate in agentStates:
             if not astate.hasFolded:
                 handsAndPlayers.append((astate.getHand(), astate))
-        print("determining victors out of {}".format(handsAndPlayers))
+        # print("determining victors out of {}".format(handsAndPlayers))
         if len(handsAndPlayers) == 1:
             return [handsAndPlayers[0][1]]
         for hand in handsAndPlayers:
             cards = hand[0]
             # add the table to the player's hand
             cards += gameState.getTable()
-            print("checking cards {}".format(cards))
+            # print("checking cards {}".format(cards))
             score = Rules.evaluateHand(cards)
-            print("calculating score {}".format(score))
+            # print("calculating score {}".format(score))
             maxScore = max(maxScore, score)
         for hand in handsAndPlayers:
             c = hand[0]
             # c += gameState.getTable()
-            print("checking cards again {}".format(c))
+            # print("checking cards again {}".format(c))
             s = Rules.evaluateHand(c)
-            print("checking score again {}".format(s))
+            # print("checking score again {}".format(s))
             if s == maxScore:
                 bestPlayers.append(hand[1])
         return bestPlayers
@@ -225,7 +225,7 @@ Defines a set of rules by which the player operates
 class PlayerRules(Rules):
 
     def getLegalActions(state):
-        return Actions.getPossibleActions(state, state.getPlayerState())
+        return Actions.getPossibleActions(state.getPlayerBet(), state.getPlayerMoney())
     getLegalActions = staticmethod( getLegalActions )
 
     def applyAction(state, action):
@@ -267,7 +267,7 @@ Defines a set of rules by which the opponents operate
 """
 class OpponentRules(Rules):
     def getLegalActions(state, agentIndex):
-        return Actions.getPossibleActions(state, state.getOpponentState(agentIndex))
+        return Actions.getPossibleActions(state.getOpponentBet(agentIndex), state.getOpponentMoney(agentIndex))
     getLegalActions = staticmethod( getLegalActions )
 
     def applyAction(state, action, agentIndex):
@@ -313,25 +313,14 @@ class PokerMoves:
     ALLIN = "All-In"
 
 class Actions:
-
-
-    def getPossibleActions(gameState, playerState):
-        if playerState.isPlayer:
-            print("Player action")
-            money = playerState.getMoney()
-        else:
-            print("Opponent Action")
-            money = playerState.getMoney()
-        currentBet = gameState.getCallAmt()
-        print("current money {} | current call {}".format(money, currentBet))
-
+    def getPossibleActions(bet, agentMoney):
         actionList = [PokerMoves.FOLD]
-        if money < currentBet:
+        if agentMoney < bet:
             return actionList
-        if money >= currentBet:
+        if agentMoney >= bet:
             actionList += [PokerMoves.CALL, PokerMoves.ALLIN]
-        if money > currentBet:
-            if money > 2 * currentBet:
+        if agentMoney > bet:
+            if agentMoney > 2 * bet:
                 actionList += [PokerMoves.RAISE, PokerMoves.DOUBLEDOWN]
             else:
                 actionList.append(PokerMoves.RAISE)
@@ -418,6 +407,7 @@ class GameStateData:
             self.table = prevState.table
             self.startingHouseSize = prevState.startingHouseSize
             self.deck = prevState.deck
+            self.calledPlayers = prevState.calledPlayers
         else:
             self.lose = False
             self.win = False
@@ -430,6 +420,7 @@ class GameStateData:
             self.deck = deck
             self.table = self.dealHand(self.startingHouseSize)
             self.startingMoney = 1000
+            self.calledPlayers = []
 
     def getTable(self):
         return self.table
@@ -517,6 +508,7 @@ class GameStateData:
             astate.initialize(i, self)
             self.winningMoney += astate.getMoney()
             self.agentStates.append(astate)
+            self.calledPlayers.append(False)
 
 
 
@@ -578,6 +570,11 @@ class AgentState:
         else:
             self.hasFolded = False
             gameState.data.updateCall(amount)
+            if amount == gameState.data.getCallAmt():
+                gameState.hasCalled(self.index)
+            # if we're not meeting the call, we must be changing it
+            else:
+                gameState.resetCalledPlayers(self.index)
             self.money -= amount
             gameState.data.addPot(amount)
         self.latestBet = amount
@@ -598,6 +595,17 @@ class GameState:
 
     def newHand(self, hand):
         return self.data.dealNewHand(hand)
+
+    def hasCalled(self, playerIndex):
+        self.data.calledPlayers[playerIndex] = True
+
+    def resetCalledPlayers(self, playerIndex):
+        for i in self.data.calledPlayers:
+            i = False
+        self.data.calledPlayers[playerIndex] = True
+
+    def playerHasCalled(self, playerIndex):
+        return self.data.calledPlayers[playerIndex]
 
     def payOut(self):
         agentStates = Rules.determineVictors(self)
@@ -672,7 +680,8 @@ class GameState:
         """
         Returns an AgentState object for player
         """
-        return self.data.agentStates[0].copy()
+        return self.data.agentStates[0]
+        # removed .copy()
 
     def getWinningMoney(self):
         return self.data.getWinningMoney()
@@ -688,6 +697,9 @@ class GameState:
 
     def getOpponentStates( self ):
         return self.data.agentStates[1:]
+
+    def getOpponentBet(self, agentIndex):
+        return self.data.agentStates[agentIndex].getBet()
 
     def getOpponentState( self, agentIndex ):
         if agentIndex == 0 or agentIndex >= self.getNumAgents():
@@ -855,7 +867,7 @@ class Game:
         numAgents = len( self.agents )
 
         while not self.gameOver:
-            print("loop beginning for agent {}".format(agentIndex))
+            # print("loop beginning for agent {}".format(agentIndex))
             # Fetch the next agent
             agent = self.agents[agentIndex]
             move_time = 0
@@ -953,13 +965,14 @@ class Game:
                 self.state.roundComplete(True)
                 # all players have either called or folded
                 for a in self.state.data.agentStates:
-                    if not a.hasFolded or a.getBet() != self.state.getCallAmt():
+                    if not (a.hasFolded or self.state.playerHasCalled(a.index)):
+                        print("called {}, folded {}, round continues".format(a.hasFolded, self.state.playerHasCalled(a.index)))
                         self.state.roundComplete(False)
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)
             # Next agent
             agentIndex = ( agentIndex + 1 ) % numAgents
-            print("next agent: {}".format(agentIndex))
+            # print("next agent: {}".format(agentIndex))
             if _BOINC_ENABLED:
                 boinc.set_fraction_done(self.getProgress())
 
@@ -976,4 +989,3 @@ class Game:
                     self.unmute()
                     return
         # self.display.finish()
-        print("finish")

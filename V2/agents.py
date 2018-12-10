@@ -23,9 +23,12 @@ class Agent:
         #     self.
 
 class AlwaysCallAgent:
-    def getAction(self, state):
-        return PokerMoves.CALL
-
+    def getAction(self, gameState):
+        legalMoves = gameState.getLegalActions()
+        if PokerMoves.CALL in legalMoves:
+            return PokerMoves.CALL
+        else:
+            return PokerMoves.FOLD
 
 class ReflexAgent(Agent):
     """
