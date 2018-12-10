@@ -60,7 +60,7 @@ class ClassicGameRules:
     def newHand(state, agentIndex=0):
         print("new hand for {}".format(agentIndex))
         state.data.agentStates[agentIndex].newHand(state)
-        state.data.newTable()
+        # state.data.newTable()
     newHand = staticmethod(newHand)
 
     def isRoyalFlush(cards):
@@ -159,7 +159,6 @@ class ClassicGameRules:
         Checks to see whether it is time to end the current phase of the game.
         """
         if ClassicGameRules.handOver(state):
-            print("\n\n The Round is Over! \n \n")
             state.payOut()
             state.roundComplete(False)
             for agentState in state.data.agentStates:
@@ -170,7 +169,8 @@ class ClassicGameRules:
                 else:
                     OpponentRules.newHand(state, agentState.index)
                     OpponentRules.checkBank(state, agentState.index)
-
+            if not (state.isWin() or state.isLose()):
+                state.data.newTable()
             # nr = input("press any key to continue to next round: ")
         if state.isWin(): self.win(state, game)
         if state.isLose(): self.lose(state, game)
@@ -374,10 +374,24 @@ class Deck:
     cards = []
     # use this to reshuffle deck so that cards the players already have are not re-added
     discardedCards = []
-    hand = []
+    drawnCards = []
 
     def __init__(self, nDecks=1):
+        self.nDecks = nDecks
         for _ in range(nDecks):
+            # every suite
+            for s in ["H", "D", "C", "S"]:
+                # every value
+                for i in range(1, 14):
+                    self.cards.append(Card(i, s))
+        random.shuffle(self.cards)
+        print("Starting deck {}".format(self.cards))
+
+    def newDeck(self):
+        self.cards = []
+        self.discardedCards = []
+        self.drawnCards = []
+        for _ in range(self.nDecks):
             # every suite
             for s in ["H", "D", "C", "S"]:
                 # every value
@@ -386,19 +400,40 @@ class Deck:
         random.shuffle(self.cards)
 
     def draw(self):
+        # print("drawing from {}".format(self))
         try:
-            return self.cards.pop()
+            card = self.cards.pop()
         except:
             self.reshuffle()
-            return self.cards.pop()
+            card = self.cards.pop()
+        self.drawnCards.append(card)
+        return card
 
     def reshuffle(self):
-        random.shuffle(self.discardedCards)
-        self.cards = self.discardedCards
+        # print("deck before reshuffle {}".format(self))
+        # print("discardedCards {}".format(self.discardedCards))
+        cardsToReshuffle = list(self.discardedCards)
+        for card in cardsToReshuffle:
+            self.cards.append(card)
+            if card not in self.cards:
+                raise Exception("card not reshuffled")
+        random.shuffle(self.cards)
         self.discardedCards = []
+        # print("deck after reshuffle {}".format(self))
+        print("total number of cards (drawn {} + discarded {} + deck {})".format(len(self.drawnCards), len(self.discardedCards), len(self.cards)))
+        if len(self.drawnCards) + len(self.discardedCards) + len(self.cards) != 4 * 13 * self.nDecks:
+            raise Exception("total number of cards (drawn {} + discarded {} + deck {}) has changed".format(len(self.drawnCards), len(self.discardedCards), len(self.cards)))
 
-    def returnCards(self, cards):
-        self.discardedCards += cards
+    def returnCards(self, returns):
+        print("returning {} to deck".format(returns))
+        for r in returns:
+            print("returning card {}".format(r))
+            self.discardedCards.append(r)
+            self.drawnCards.remove(r)
+            if r not in self.discardedCards:
+                raise Exception("card was not returned")
+        self.discardedCards.sort()
+        print("discarded {}".format(self.discardedCards))
 
     def __str__(self):
         repr = "\nDiamonds:"+str(selectSuite(self.cards, "Diamonds"))+"\nClubs:"+str(selectSuite(self.cards, "Clubs"))+"\nSpades:"+str(selectSuite(self.cards, "Spades"))+"\nHearts:"+str(selectSuite(self.cards, "Hearts"))
@@ -441,12 +476,15 @@ class GameStateData:
         return self.table
 
     def newTable(self):
-        self.returnCards(self.table)
         self.resetCall()
-        self.table = self.dealHand(self.startingHouseSize)
+        self.table = self.dealNewHand(self.table, self.startingHouseSize)
+        print("new table {}".format(self.table))
 
     def dealNewHand(self, oldCards, size=2):
-        self.returnCards(oldCards)
+        print("dealing a new hand")
+        if oldCards == []:
+            raise Exception("attempting to return 0 cards")
+        self.deck.returnCards(oldCards)
         return self.dealHand(size)
 
     def dealHand(self, size=2):
@@ -461,9 +499,6 @@ class GameStateData:
         self.table.append(draw)
         print("Pot is {}".format(self.getPot()))
         print("table is now {}".format(self.table))
-
-    def returnCards(self, cards):
-        self.deck.returnCards(cards)
 
     def getWinningMoney(self):
         return self.winningMoney
@@ -514,6 +549,7 @@ class GameStateData:
     def initialize(self, numOpponentAgents):
         self.agentStates = []
         self.winningMoney = 0
+        self.deck.newDeck()
         numPlayers = 0
         for i in range(numOpponentAgents+1):
             print("init agent {}".format(i))

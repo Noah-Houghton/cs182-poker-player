@@ -3,7 +3,6 @@ import util
 import sys, types, time, random, os
 from game import ClassicGameRules
 
-
 #############################
 # FRAMEWORK TO START A GAME #
 #############################
@@ -42,11 +41,11 @@ def readCommand( argv ):
                       help=default('the number of GAMES to play'), metavar='GAMES', default=1)
     parser.add_option('-p', '--player', dest='player',
                       help=default('the agent TYPE in the agents module to use'),
-                      metavar='TYPE', default='KeyboardAgent')
-    parser.add_option('-t', '--textGraphics', action='store_true', dest='textGraphics',
-                      help='Display output as text only', default=False)
-    parser.add_option('-q', '--quietTextGraphics', action='store_true', dest='quietGraphics',
-                      help='Generate minimal output and no graphics', default=True)
+                      metavar='TYPE', default='ReflexAgent')
+    # parser.add_option('-t', '--textGraphics', action='store_true', dest='textGraphics',
+    #                   help='Display output as text only', default=False)
+    # parser.add_option('-q', '--quietTextGraphics', action='store_true', dest='quietGraphics',
+    #                   help='Generate minimal output and no graphics', default=True)
     parser.add_option('-g', '--opponents', dest='opponent',
                       help=default('the opponent agent TYPE in the agents module to use'),
                       metavar = 'TYPE', default='RandomOpponent')
@@ -84,8 +83,8 @@ def readCommand( argv ):
     # if args['layout'] == None: raise Exception("The layout " + options.layout + " cannot be found")
 
     # Choose a Pacman agent
-    noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
-    playerType = loadAgent(options.player, noKeyboard)
+    # noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
+    playerType = loadAgent(options.player)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
@@ -99,17 +98,17 @@ def readCommand( argv ):
         options.numIgnore = int(agentOpts['numTrain'])
 
     # Choose a ghost agent
-    opponentType = loadAgent(options.opponent, noKeyboard)
+    opponentType = loadAgent(options.opponent)
     args['opponents'] = [opponentType( i+1 ) for i in range( options.numOpponents )]
 
     # Choose a display format
-    if options.quietGraphics:
-        import textDisplay
-        args['display'] = textDisplay.NullGraphics()
-    elif options.textGraphics:
-        import textDisplay
-        textDisplay.SLEEP_TIME = options.frameTime
-        args['display'] = textDisplay.PokerGraphics()
+    # if options.quietGraphics:
+    #     import textDisplay
+    #     args['display'] = textDisplay.NullGraphics()
+    # elif options.textGraphics:
+    #     import textDisplay
+    #     textDisplay.SLEEP_TIME = options.frameTime
+    #     args['display'] = textDisplay.PokerGraphics()
     # else:
     #     import graphicsDisplay
     #     args['display'] = graphicsDisplay.PacmanGraphics(options.zoom, frameTime = options.frameTime)
@@ -131,7 +130,7 @@ def readCommand( argv ):
 
     return args
 
-def loadAgent(opponent, nographics):
+def loadAgent(opponent):
     # Looks through all pythonPath Directories for the right module,
     pythonPathStr = os.path.expandvars("$PYTHONPATH")
     if pythonPathStr.find(';') == -1:
@@ -174,25 +173,30 @@ def loadAgent(opponent, nographics):
 #
 #     display.finish()
 
-def runGames( player, opponents, display, numGames, record, numTraining = 0, catchExceptions=False, timeout=30 ):
+def runGames( player, opponents, numGames, record, numTraining = 0, catchExceptions=False, timeout=30 ):
     import __main__
-    __main__.__dict__['_display'] = display
+    # __main__.__dict__['_display'] = display
 
     rules = ClassicGameRules(timeout)
     games = []
-
+    gamesTime = []
     for i in range( numGames ):
         beQuiet = i < numTraining
         if beQuiet:
                 # Suppress output and graphics
-            import textDisplay
-            gameDisplay = textDisplay.NullGraphics()
+            # import textDisplay
+            # gameDisplay = textDisplay.NullGraphics()
             rules.quiet = True
         else:
-            gameDisplay = display
+            # gameDisplay = display
             rules.quiet = False
         game = rules.newGame(player, opponents, beQuiet, catchExceptions)
+        import time
+        # start timer
+        time.clock()
         game.run()
+        # end timer
+        gamesTime.append(time.clock())
         if not beQuiet: games.append(game)
 
         if record:
@@ -207,6 +211,7 @@ def runGames( player, opponents, display, numGames, record, numTraining = 0, cat
         scores = [game.state.getScore() for game in games]
         wins = [game.state.isWin() for game in games]
         winRate = wins.count(True)/ float(len(wins))
+        print 'Average Time:', sum(gamesTime) / float(len(gamesTime))
         print 'Average Score:', sum(scores) / float(len(scores))
         print 'Scores:       ', ', '.join([str(score) for score in scores])
         print 'Win Rate:      %d/%d (%.2f)' % (wins.count(True), len(wins), winRate)
@@ -226,9 +231,7 @@ if __name__ == '__main__':
     > python fivecard-holdem.py --help
     """
     args = readCommand( sys.argv[1:] ) # Get game components based on input
-    print(args)
     runGames( **args )
-
     # import cProfile
     # cProfile.run("runGames( **args )")
     pass
