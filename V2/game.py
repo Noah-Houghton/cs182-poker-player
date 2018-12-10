@@ -36,7 +36,10 @@ PAIR = TWOPAIR - 1 #24
 """
 Common set of functions for rules
 """
-class Rules:
+class ClassicGameRules:
+
+    def __init__(self, timeout=30):
+        self.timeout = timeout
 
     def newGame( self, playerAgent, opponentAgents, quiet = False, catchExceptions=False):
         # agents = [pacmanAgent] + ghostAgents[:layout.getNumGhosts()]
@@ -128,13 +131,13 @@ class Rules:
                 hasPair = True
         for suit in suits:
             if len(suit) == 5:
-                if Rules.isRoyalFlush(suit):
+                if ClassicGameRules.isRoyalFlush(suit):
                     bestScore = max(ROYALFLUSH, bestScore)
-                elif Rules.isStraightFlush(suit):
+                elif ClassicGameRules.isStraightFlush(suit):
                     bestScore = max(STRAIGHTFLUSH, bestScore)
                 else:
                     bestScore = max(FLUSH, bestScore)
-        return max(Rules.highCard(hand), bestScore)
+        return max(ClassicGameRules.highCard(hand), bestScore)
     evaluateHand = staticmethod(evaluateHand)
 
     def handOver(state):
@@ -155,7 +158,7 @@ class Rules:
         """
         Checks to see whether it is time to end the current phase of the game.
         """
-        if Rules.handOver(state):
+        if ClassicGameRules.handOver(state):
             print("\n\n The Round is Over! \n \n")
             state.payOut()
             state.roundComplete(False)
@@ -207,14 +210,14 @@ class Rules:
             # add the table to the player's hand
             cards += gameState.getTable()
             # print("checking cards {}".format(cards))
-            score = Rules.evaluateHand(cards)
+            score = ClassicGameRules.evaluateHand(cards)
             # print("calculating score {}".format(score))
             maxScore = max(maxScore, score)
         for hand in handsAndPlayers:
             cards = list(hand[0])
             cards += gameState.getTable()
             # print("checking cards again {}".format(c))
-            score = Rules.evaluateHand(cards)
+            score = ClassicGameRules.evaluateHand(cards)
             # print("checking score again {}".format(s))
             if score == maxScore:
                 bestPlayers.append(hand[1])
@@ -226,7 +229,7 @@ class Rules:
 """
 Defines a set of rules by which the player operates
 """
-class PlayerRules(Rules):
+class PlayerRules(ClassicGameRules):
 
     def getLegalActions(state):
         print("getting player actions")
@@ -259,7 +262,7 @@ class PlayerRules(Rules):
         print("Player money: {} of {}".format(currentMoney, gameState.getWinningMoney()))
         if currentMoney < 0:
             raise Exception("Player cannot have negative money")
-        if (currentMoney == 0 or currentMoney - gameState.data.getAnte() <= 0) and Rules.handOver(gameState):
+        if (currentMoney == 0 or currentMoney - gameState.data.getAnte() <= 0) and ClassicGameRules.handOver(gameState):
             print("player has lost")
             gameState.data.lose = True
         if currentMoney == gameState.getWinningMoney():
@@ -270,7 +273,7 @@ class PlayerRules(Rules):
 """
 Defines a set of rules by which the opponents operate
 """
-class OpponentRules(Rules):
+class OpponentRules(ClassicGameRules):
     def getLegalActions(state, agentIndex):
         print("getting opponent actions")
         return Actions.getPossibleActions(state, agentIndex)
@@ -564,7 +567,7 @@ class AgentState:
         return "Agent {} | Hand: {}".format(self.index, self.hand)
 
     def __repr__(self):
-        return "Agent {} | Hand Value: {}".format(self.index, Rules.evaluateHand(self.hand))
+        return "Agent {} | Hand Value: {}".format(self.index, ClassicGameRules.evaluateHand(self.hand))
 
 
     def copy( self ):
@@ -633,7 +636,7 @@ class GameState:
         return self.data.calledPlayers[playerIndex]
 
     def payOut(self):
-        agentStates = Rules.determineVictors(self)
+        agentStates = ClassicGameRules.determineVictors(self)
         if len(agentStates) == 1:
             agentStates[0].addMoney(self.data.getPot())
             print("{} won the pot! Adding {}".format(agentStates[0], self.data.getPot()))
