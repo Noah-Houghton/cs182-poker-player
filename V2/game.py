@@ -1,5 +1,5 @@
 import util
-import agents
+# import agents
 import random
 
 
@@ -23,14 +23,14 @@ ng.run()
 
 # define points per hand as constants
 ROYALFLUSH = 32
-STRAIGHTFLUSH = ROYALFLUSH - 1
-FOUROFAKIND = STRAIGHTFLUSH - 1
-FULLHOUSE = FOUROFAKIND - 1
-FLUSH = FULLHOUSE - 1
-STRAIGHT = FLUSH - 1
-THREEOFAKIND = STRAIGHT - 1
-TWOPAIR = THREEOFAKIND - 1
-PAIR = TWOPAIR - 1
+STRAIGHTFLUSH = ROYALFLUSH - 1 #31
+FOUROFAKIND = STRAIGHTFLUSH - 1 #30
+FULLHOUSE = FOUROFAKIND - 1 #29
+FLUSH = FULLHOUSE - 1 #28
+STRAIGHT = FLUSH - 1 #27
+THREEOFAKIND = STRAIGHT - 1 #26
+TWOPAIR = THREEOFAKIND - 1 #25
+PAIR = TWOPAIR - 1 #24
 
 
 """
@@ -99,6 +99,8 @@ class Rules:
         spades = selectSuite(hand, "Spades")
         suits = [diamonds, hearts, clubs, spades]
         nums = [selectValue(hand, i) for i in range(1, 14)]
+        nums.sort(key=len)
+        suits.sort(key=len)
 
         bestScore = 0
         hasPair = False
@@ -200,13 +202,17 @@ class Rules:
             cards = hand[0]
             # add the table to the player's hand
             cards += gameState.getTable()
+            print("checking cards {}".format(cards))
             score = Rules.evaluateHand(cards)
+            print("calculating score {}".format(score))
             maxScore = max(maxScore, score)
         for hand in handsAndPlayers:
             c = hand[0]
-            c += gameState.getTable()
-            score = Rules.evaluateHand(cards)
-            if score == maxScore:
+            # c += gameState.getTable()
+            print("checking cards again {}".format(c))
+            s = Rules.evaluateHand(c)
+            print("checking score again {}".format(s))
+            if s == maxScore:
                 bestPlayers.append(hand[1])
         return bestPlayers
 
@@ -246,7 +252,9 @@ class PlayerRules(Rules):
         currentMoney = gameState.getPlayerMoney()
         gameState.data.score = currentMoney
         print("Player money: {} of {}".format(currentMoney, gameState.getWinningMoney()))
-        if currentMoney <= 0 and Rules.handOver(gameState):
+        if currentMoney < 0:
+            raise Exception("Player cannot have negative money")
+        if currentMoney == 0 and Rules.handOver(gameState):
             print("player has lost")
             gameState.data.lose = True
         if currentMoney == gameState.getWinningMoney():
@@ -259,7 +267,7 @@ Defines a set of rules by which the opponents operate
 """
 class OpponentRules(Rules):
     def getLegalActions(state, agentIndex):
-        return Actions.getPossibleActions(state, state.getOpponentMoney(agentIndex))
+        return Actions.getPossibleActions(state, state.getOpponentState(agentIndex))
     getLegalActions = staticmethod( getLegalActions )
 
     def applyAction(state, action, agentIndex):
@@ -279,14 +287,16 @@ class OpponentRules(Rules):
         else:
             raise Exception("Opponent Action not recognized")
         state.bet(betAmt, agentIndex)
-        print("Opponent {} has bet {}".format(agentIndex, betAmt))
-        print("Money is now {}".format(state.getOpponentMoney(agentIndex)))
+        # print("Opponent {} has bet {}".format(agentIndex, betAmt))
+        # print("Money is now {}".format(state.getOpponentMoney(agentIndex)))
     applyAction = staticmethod( applyAction )
 
 
     def checkBank(state, agentIndex):
         currentMoney = state.getOpponentMoney(agentIndex)
         print("Opponent money: {} \\ {}".format(currentMoney, state.getWinningMoney()))
+        if currentMoney < 0:
+            raise Exception("Agent cannot have negative money")
         # if currentMoney <= 0:
             # state.data.win = True
         if currentMoney == state.getWinningMoney():
@@ -294,27 +304,37 @@ class OpponentRules(Rules):
     checkBank = staticmethod( checkBank )
 
 
+class PokerMoves:
+
+    CALL = "Call"
+    FOLD = "Fold"
+    RAISE = "Raise"
+    DOUBLEDOWN = "Double Down"
+    ALLIN = "All-In"
+
 class Actions:
 
-    def getPossibleActions(gameState, agentState):
-        money = agentState.getMoney()
+
+    def getPossibleActions(gameState, playerState):
+        if playerState.isPlayer:
+            print("Player action")
+            money = playerState.getMoney()
+        else:
+            print("Opponent Action")
+            money = playerState.getMoney()
         currentBet = gameState.getCallAmt()
-        print("current call {}".format(currentBet))
-        CL = "Call"
-        FLD = "Fold"
-        RS = "Raise"
-        DD = "Double Down"
-        AI = "All-In"
-        actionList = [FLD]
-        if 0 > money - currentBet:
+        print("current money {} | current call {}".format(money, currentBet))
+
+        actionList = [PokerMoves.FOLD]
+        if money < currentBet:
             return actionList
         if money >= currentBet:
-            actionList += [CL, AI]
+            actionList += [PokerMoves.CALL, PokerMoves.ALLIN]
         if money > currentBet:
             if money > 2 * currentBet:
-                actionList += [RS, DD]
+                actionList += [PokerMoves.RAISE, PokerMoves.DOUBLEDOWN]
             else:
-                actionList.append(RS)
+                actionList.append(PokerMoves.RAISE)
         return actionList
     getPossibleActions = staticmethod(getPossibleActions)
 
@@ -433,6 +453,7 @@ class GameStateData:
         draw = self.dealCard()
         print("dealer drew {}".format(draw))
         self.table.append(draw)
+        print("Pot is {}".format(self.getPot()))
         print("table is now {}".format(self.table))
 
     def returnCards(self, cards):
@@ -537,11 +558,11 @@ class AgentState:
 
     def copy( self ):
         state = AgentState( self.isPlayer )
-        state.money = self.money
-        state.hand = self.hand
-        state.index = self.index
         state.hasFolded = self.hasFolded
         state.latestBet = self.latestBet
+        state.index = self.index
+        state.money = self.money
+        state.hand = self.hand
         return state
 
     def getMoney(self):
@@ -556,10 +577,10 @@ class AgentState:
             self.hasFolded = True
         else:
             self.hasFolded = False
+            gameState.data.updateCall(amount)
             self.money -= amount
             gameState.data.addPot(amount)
-            self.latestBet = amount
-            gameState.data.updateCall(amount)
+        self.latestBet = amount
 
     def getHand(self):
         return self.hand
@@ -588,8 +609,13 @@ class GameState:
             # split pot if it's a tie
             print("splitting across players {}".format(agentStates))
             for i in range(len(agentStates)):
-                # print("{} receiving {}".format(players[i], self.pot/len(players)))
-                agentStates[i].addMoney(self.data.getPot()/len(agentStates))
+                if self.data.getPot() % len(agentStates) != 0:
+                    agentStates[i].addMoney(self.data.getPot()/len(agentStates))
+                    # naively just give the remainder to the first person
+                    if i == 0:
+                        agentStates[i].addMoney(self.data.getPot() % len(agentStates))
+                else:
+                    agentStates[i].addMoney(self.data.getPot()/len(agentStates))
         self.data.resetPot()
         self.callAmt = self.data.getAnte()
 
@@ -925,6 +951,10 @@ class Game:
             if agentIndex == numAgents - 1:
                 self.numMoves += 1
                 self.state.roundComplete(True)
+                # all players have either called or folded
+                for a in self.state.data.agentStates:
+                    if not a.hasFolded or a.getBet() != self.state.getCallAmt():
+                        self.state.roundComplete(False)
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)
             # Next agent

@@ -1,5 +1,6 @@
 import util
 import random
+from game import PokerMoves
 
 class Agent:
         """
@@ -20,6 +21,11 @@ class Agent:
 
         # def registerInitialState(self, state):
         #     self.
+
+class AlwaysCallAgent:
+    def getAction(self, state):
+        return PokerMoves.CALL
+
 
 class ReflexAgent(Agent):
     """
