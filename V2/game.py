@@ -13,7 +13,7 @@ player = agents.ReflexAgent()
 opponents = []
 # do this as many times as you want opponent agents
 opponents.append(agents.ReflexAgent())
-rules = game.Rules()
+rules = game.ClassicGameRules()
 ng = rules.newGame(player, opponents)
 ng.run()
 
