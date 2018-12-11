@@ -69,7 +69,8 @@ def readCommand( argv ):
                       help='Turns on exception handling and timeouts during games', default=False)
     parser.add_option('--timeout', dest='timeout', type='int',
                       help=default('Maximum length of time an agent can spend computing in a single game'), default=30)
-
+    parser.add_option('-s', '--suppressOutput', action='store_true', dest='suppressOutput', help='Prevents games from printing',
+                      default=False)
     options, otherjunk = parser.parse_args(argv)
     if len(otherjunk) != 0:
         raise Exception('Command line input not understood: ' + str(otherjunk))
@@ -112,6 +113,7 @@ def readCommand( argv ):
     # else:
     #     import graphicsDisplay
     #     args['display'] = graphicsDisplay.PacmanGraphics(options.zoom, frameTime = options.frameTime)
+    args['suppressPrint'] = options.suppressOutput
     args['numGames'] = options.numGames
     args['record'] = options.record
     args['catchExceptions'] = options.catchExceptions
@@ -144,10 +146,8 @@ def loadAgent(opponent):
         moduleNames = [f for f in os.listdir(moduleDir) if f.endswith('gents.py')]
         for modulename in moduleNames:
             try:
-                print(modulename[:-3])
                 module = __import__(modulename[:-3])
-            except ImportError:
-                print("import error")
+            except:
                 continue
             if opponent in dir(module):
                 # if nographics and modulename == 'keyboardAgents.py':
@@ -173,7 +173,7 @@ def loadAgent(opponent):
 #
 #     display.finish()
 
-def runGames( player, opponents, numGames, record, numTraining = 0, catchExceptions=False, timeout=30 ):
+def runGames( player, opponents, numGames, record, numTraining = 0, catchExceptions=False, timeout=30, suppressPrint=False ):
     import __main__
     # __main__.__dict__['_display'] = display
 
@@ -190,7 +190,7 @@ def runGames( player, opponents, numGames, record, numTraining = 0, catchExcepti
         else:
             # gameDisplay = display
             rules.quiet = False
-        game = rules.newGame(player, opponents, beQuiet, catchExceptions)
+        game = rules.newGame(player, opponents, beQuiet, catchExceptions, suppressPrint)
         import time
         # start timer
         time.clock()

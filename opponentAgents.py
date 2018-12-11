@@ -20,7 +20,7 @@ class OpponentAgent( Agent ):
         util.raiseNotDefined()
 
 class RandomOpponent( OpponentAgent ):
-    "A ghost that chooses a legal action uniformly at random."
+    "An opponent that chooses a legal action uniformly at random."
     def getDistribution( self, state ):
         dist = util.Counter()
         for a in state.getLegalActions( self.index ): dist[a] = 1.0

@@ -23,20 +23,26 @@ class Agent:
         #     self.
 
 class AlwaysCallAgent(Agent):
+    """
+    Returns Call if it is able, otherwise returns a random legal action.
+    """
     def getAction(self, gameState):
         legalMoves = gameState.getLegalActions(self.index)
         if PokerMoves.CALL in legalMoves:
             return PokerMoves.CALL
         else:
-            return PokerMoves.FOLD
+            return random.choice(legalMoves)
 
 class AlwaysRaiseAgent(Agent):
+    """
+    Returns Raise if it is able, otherwise returns a random legal action.
+    """
     def getAction(self, gameState):
         legalMoves = gameState.getLegalActions(self.index)
         if PokerMoves.RAISE in legalMoves:
             return PokerMoves.RAISE
         else:
-            return PokerMoves.FOLD
+            return random.choice(legalMoves)
 
 class ReflexAgent(Agent):
     """
@@ -60,6 +66,8 @@ class ReflexAgent(Agent):
         # Collect legal moves and successor states
         legalMoves = gameState.getLegalActions(self.index)
         # Choose one of the best actions
+        if legalMoves == []:
+            raise Exception("no  legal moves returned")
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
@@ -92,4 +100,6 @@ class ReflexAgent(Agent):
         newHand = successorGameState.getPlayerHand()
 
         "*** YOUR CODE HERE ***"
+        # gets the score by taking next move
+        # score is the money the player has, so this is a bad heuristic
         return successorGameState.getScore()
