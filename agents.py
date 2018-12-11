@@ -1,26 +1,100 @@
 import util
 import random
 from game import PokerMoves
+from game import ClassicGameRules
 
 class Agent:
+    """
+    An agent must define a getAction method, but may also define the
+    following methods which will be called if they exist:
+
+    def registerInitialState(self, state): # inspects the starting state
+    """
+    def __init__(self, index=0):
+        self.index = index
+
+    def getAction(self, state):
         """
-        An agent must define a getAction method, but may also define the
-        following methods which will be called if they exist:
-
-        def registerInitialState(self, state): # inspects the starting state
+        The Agent will receive a GameState and
+        must return an action
         """
-        def __init__(self, index=0):
-            self.index = index
+        raiseNotDefined()
 
-        def getAction(self, state):
-            """
-            The Agent will receive a GameState and
-            must return an action
-            """
-            raiseNotDefined()
+    # def registerInitialState(self, state):
+    #     self.
 
-        # def registerInitialState(self, state):
-        #     self.
+class OnlyFlushAgent(Agent):
+    """
+    This agent only bets when it has a flush or better in hand.
+    """
+    def getAction(self, gameState):
+        legalMoves = gameState.getLegalActions(self.index)
+        flushes = [ClassicGameRules.FLUSH, ClassicGameRules.STRAIGHTFLUSH, ClassicGameRules.ROYALFLUSH]
+        if ClassicGameRules.evaluateHand(gameState.getHandAndTable(self.index)) in flushes:
+            if PokerMoves.ALLIN in legalMoves:
+                return PokerMoves.ALLIN
+            elif PokerMoves.LARGERAISE in legalMoves:
+                return PokerMoves.LARGERAISE
+            elif PokerMoves.RAISE in legalMoves:
+                return PokerMoves.RAISE
+            else:
+                return random.choice(legalMoves)
+        else:
+            if PokerMoves.FOLD in legalMoves:
+                return PokerMoves.FOLD
+            else:
+                return random.choice(legalMoves)
+
+
+
+class NaiveAgent(Agent):
+    """
+    Based on pot size, hand strength,
+    and money player has, chooses an
+    action.
+
+    s = strength hand
+    p = pot size
+    z = agent money
+
+    if p < 50:
+        max = s * (1-1/z)
+    else:
+        max = 2s * (1-1/z)
+
+    Where max is the player's maximum bet cost
+    """
+    def getAction(self, gameState):
+        handStrength = gameState.getHandStrength(self.index)
+        potSize = gameState.getPot()
+        agentMoney = gameState.data.agentStates[self.index].getMoney()
+        maxBet = 0
+        if agentMoney > 0:
+            if potSize > 50:
+                maxBet = handStrength * (1 - (1.0/agentMoney))
+            else:
+                maxBet = handStrength * 2 * (1 - (1.0/agentMoney))
+        legalMoves = gameState.getLegalActions(self.index)
+        # selects the action whose cost is closest to max
+        # as calculated above
+        highestCost = float("-inf")
+        bestAction = None
+        for move in legalMoves:
+            # print("checking {}".format(move))
+            cost = PokerMoves.moveToCost(move, gameState, self.index)
+            if cost > highestCost and cost <= maxBet:
+                highestCost = cost
+                bestAction = move
+        return bestAction
+
+
+class RandomAgent(Agent):
+    """
+    Returns a random legal action.
+    """
+    def getAction(self, gameState):
+        legalMoves = gameState.getLegalActions(self.index)
+        return random.choice(legalMoves)
 
 class AlwaysCallAgent(Agent):
     """

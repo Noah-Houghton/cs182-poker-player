@@ -148,6 +148,7 @@ def loadAgent(opponent):
             try:
                 module = __import__(modulename[:-3])
             except:
+                print("import error")
                 continue
             if opponent in dir(module):
                 # if nographics and modulename == 'keyboardAgents.py':
