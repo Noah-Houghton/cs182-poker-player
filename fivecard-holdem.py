@@ -191,6 +191,13 @@ def runGames( player, opponents, numGames, record, numTraining = 0, catchExcepti
         else:
             # gameDisplay = display
             rules.quiet = False
+        if not beQuiet:
+            if i == numGames / 4:
+                print("1/4 done!")
+            if i == numGames / 2:
+                print("halfway done!")
+            if i == (numGames / 4) * 3:
+                print("3/4 done!")
         game = rules.newGame(player, opponents, beQuiet, catchExceptions, suppressPrint)
         import time
         # start timer
