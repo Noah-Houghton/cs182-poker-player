@@ -12,7 +12,7 @@ Uses a handful of AI/ML techniques to train an agent to successfully (and even o
 - [ ] gather data!
 
 ## To Verify
-- [ ] make sure that players have to ante (I don't think they do atm despite my best efforts) -> going to try implementing an ante function instead of having it as a bet
+- [ ] make sure that players have to ante
 - [ ] no infinite games where n-1 players immediately fold
 
 ## Kyle
@@ -25,7 +25,8 @@ Uses a handful of AI/ML techniques to train an agent to successfully (and even o
 - [ ] Advanced Agent
 # Backlog
 - [ ] implement allin if you can't make call
-- [ ] small/large blind
+- [ ] implement check
+- [ x ] small/large blind
 - [ ] graphics
 - [ ] keyboardAgent
 - [ ] order of suits for highCard (?)
