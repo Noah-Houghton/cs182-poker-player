@@ -295,12 +295,12 @@ class OpponentRules(ClassicGameRules):
 
 
 class PokerMoves:
-"""
-To add a move to the game:
-1. Define it as below
-2. Add it to the movesAsList list
-3. Add relevant logic to moveToCost function
-"""
+    """
+    To add a move to the game:
+    1. Define it as below
+    2. Add it to the movesAsList list
+    3. Add relevant logic to moveToCost function
+    """
 
 
     CALL = "Call"
