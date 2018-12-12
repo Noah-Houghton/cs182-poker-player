@@ -2,6 +2,18 @@
 
 Uses a handful of AI/ML techniques to train an agent to successfully (and even optimally) play variants of Poker.
 
+
+## Dependencies
+pip install PyPokerEngine
+pip install pypokergui
+
+## To Run
+> pypokergui build_config --maxround 10 --stack 100 --small_blind 10 --ante 5 >> poker_conf.yaml
+
+change ai_players in poker_conf.yaml to reflect the agent you want it to be
+
+> pypokergui serve poker_conf.yaml --port 8000 --speed moderate
+
 # TODO
 - [ x ] terminal graphics
 - [ x ] fix command line startup from fivecard-holdem.py
