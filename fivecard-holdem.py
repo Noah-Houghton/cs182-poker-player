@@ -1,7 +1,7 @@
 import util
 # import layout
 import sys, types, time, random, os
-from game import ClassicGameRules
+from rules import ClassicGameRules
 
 #############################
 # FRAMEWORK TO START A GAME #
@@ -50,7 +50,7 @@ def readCommand( argv ):
                       help=default('the opponent agent TYPE in the agents module to use'),
                       metavar = 'TYPE', default='RandomOpponent')
     parser.add_option('-k', '--numopponents', type='int', dest='numOpponents',
-                      help=default('The maximum number of opponents to use'), default=4)
+                      help=default('The maximum number of opponents to use'), default=3)
     # parser.add_option('-z', '--zoom', type='float', dest='zoom',
     #                   help=default('Zoom the size of the graphics window'), default=1.0)
     parser.add_option('-f', '--fixRandomSeed', action='store_true', dest='fixRandomSeed',
@@ -178,9 +178,11 @@ def runGames( player, opponents, numGames, record, numTraining = 0, catchExcepti
     import __main__
     # __main__.__dict__['_display'] = display
 
+    import time
     rules = ClassicGameRules(timeout)
     games = []
     gamesTime = []
+    firstTime = time.time()
     for i in range( numGames ):
         beQuiet = i < numTraining
         if beQuiet:
@@ -193,18 +195,17 @@ def runGames( player, opponents, numGames, record, numTraining = 0, catchExcepti
             rules.quiet = False
         if not beQuiet:
             if i == numGames / 4:
-                print("1/4 done!")
+                print("1/4 done! Time {}".format(time.time() - firstTime))
             if i == numGames / 2:
-                print("halfway done!")
+                print("halfway done! Time {}".format(time.time() - firstTime))
             if i == (numGames / 4) * 3:
-                print("3/4 done!")
+                print("3/4 done! Time {}".format(time.time() - firstTime))
         game = rules.newGame(player, opponents, beQuiet, catchExceptions, suppressPrint)
-        import time
         # start timer
-        time.clock()
+        startTime = time.time()
         game.run()
-        # end timer
-        gamesTime.append(time.clock())
+        # end timer when game has ended
+        gamesTime.append(time.time() - startTime)
         if not beQuiet: games.append(game)
 
         if record:
@@ -219,6 +220,7 @@ def runGames( player, opponents, numGames, record, numTraining = 0, catchExcepti
         scores = [game.state.getScore() for game in games]
         wins = [game.state.isWin() for game in games]
         winRate = wins.count(True)/ float(len(wins))
+        print 'Total Time:', time.time() - firstTime
         print 'Average Time:', sum(gamesTime) / float(len(gamesTime))
         print 'Average Score:', sum(scores) / float(len(scores))
         print 'Scores:       ', ', '.join([str(score) for score in scores])

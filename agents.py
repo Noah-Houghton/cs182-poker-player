@@ -1,7 +1,7 @@
 import util
 import random
 from game import PokerMoves
-from game import ClassicGameRules
+import rules
 
 class Agent:
     """

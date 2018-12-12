@@ -47,7 +47,7 @@ class ClassicGameRules:
             i += 1
         agents = [playerAgent] + opponentAgents
         initState = GameState()
-        initState.initialize(len(agents) - 1)
+        initState.initialize(len(agents))
         game = Game(agents, self, catchExceptions=catchExceptions)
         game.state = initState
         self.initialState = initState.deepCopy()
@@ -304,27 +304,30 @@ class PokerMoves:
         # largeBlind = agentState.getLargeBlind()
         largeBlind = 20
         call = gameState.data.getCallAmt()
+        agentToCall = 0
         agentMoney = 0
         if agentIndex == 0:
             agentMoney = gameState.getPlayerMoney()
+            agentToCall = call - gameState.getPlayerBet()
         else:
             agentMoney = gameState.getOpponentMoney(agentIndex)
+            agentToCall = call - gameState.getOpponentBet(agentIndex)
         cost = 0
         if move == PokerMoves.CALL:
-            cost = call
+            cost = agentToCall
         elif move == PokerMoves.ALLIN:
             cost = agentMoney
         elif move == PokerMoves.RAISE:
-            cost = call + smallBlind
+            cost = agentToCall + smallBlind
         elif move == PokerMoves.LARGERAISE:
-            cost = call + largeBlind
+            cost = agentToCall + largeBlind
         elif move == PokerMoves.DOUBLEDOWN:
             cost = call * 2
         elif move == PokerMoves.FOLD:
             cost = 0
         else:
             raise Exception("Action {} not Recognized".format(move))
-        if cost == 0 and move != PokerMoves.FOLD:
+        if cost == 0 and not (move == PokerMoves.FOLD or move == PokerMoves.CALL or (agentMoney == 0 and move == PokerMoves.ALLIN)):
             raise Exception("Action {} should not have cost 0".format(move))
         return cost
     moveToCost = staticmethod(moveToCost)
@@ -338,26 +341,18 @@ class Actions:
         call = state.getCallAmt()
         # print("most recent bet {}".format(state.data.agentStates[agentIndex].getBet()))
         agentMoney = state.data.agentStates[agentIndex].getMoney()
+        agentToCall = call - state.data.agentStates[agentIndex].getBet()
         if agentMoney == 0:
             return [PokerMoves.FOLD]
-        # if player cannot make call, either all-in or fold
-        if agentMoney - call < 0:
-            return [PokerMoves.ALLIN, PokerMoves.FOLD]
+        # # if player cannot make call, either all-in or fold
+        # if agentMoney - agentToCall < 0:
+        #     return [PokerMoves.ALLIN, PokerMoves.FOLD]
         possibleActions = []
         for move in PokerMoves.movesAsList:
             cost = PokerMoves.moveToCost(move, state, agentIndex)
             # print("action {} for agent {} results in agent money {}".format(move, agentIndex, agentMoney-cost))
             if agentMoney - cost >= 0:
                 possibleActions.append(move)
-                if state.data.agentStates[agentIndex].getMoney() - cost < 0:
-                    raise Exception("move results in negative money")
-        # prune/override moves as necessary
-        # # if agent can ante, it must do so
-        # if state.data.getIsAnte():
-        #     if agentMoney >= state.data.getAnte():
-        #         possibleActions.remove(PokerMoves.FOLD)
-        #     else:
-        #         return[PokerMoves.ALLIN]
         if possibleActions == []:
             raise Exception("Cannot return no possible actions")
         return possibleActions
@@ -463,12 +458,18 @@ class GameStateData:
         num = 0
         for astate in self.agentStates:
             if not astate.getHasFolded() or not astate.getBet() == 0:
-                if (astate.getMoney() > self.getCallAmt()) or (self.playerHasCalled(astate.index)):
+                if (astate.getMoney() > self.getCallAmt()) or (self.hasPlayerCalled(astate.index)):
                     num += 1
         return num
 
-    def playerHasCalled(self, agentIndex):
+    def hasPlayerCalled(self, agentIndex):
         return self.calledPlayers[agentIndex]
+
+    def setPlayerCalled(self, agentIndex=0, value=True):
+        self.calledPlayers[agentIndex] = value
+
+    def getAgentHand(self, agentIndex):
+        return self.agentStates[agentIndex].getHand()
 
 
     def draw(self):
@@ -505,6 +506,13 @@ class GameStateData:
     def resetAllIn(self):
         for agentState in self.agentStates:
             agentState.allIn = False
+
+    def newHands(self, gameState):
+        for agentState in self.agentStates:
+            if agentState.index == 0:
+                PlayerRules.newHand(gameState)
+            else:
+                OpponentRules.newHand(gameState, agentState.index)
 
     def newTable(self):
         self.resetCall()
@@ -586,7 +594,7 @@ class GameStateData:
         self.agentStates = []
         self.winningMoney = 0
         numPlayers = 0
-        for i in range(numOpponentAgents+1):
+        for i in range(numOpponentAgents):
             # print("init agent {}".format(i))
             if numPlayers == numOpponentAgents+1: continue # Max ghosts reached already
             else: numPlayers += 1
@@ -613,6 +621,8 @@ class GameStateData:
                 PlayerRules.checkBank(gameState)
             else:
                 OpponentRules.checkBank(gameState, agentState.index)
+            if agentMoney - amt != agentState.getMoney():
+                raise Exception("did not ante")
             # print("{} ante-d {}".format(agentState.index, amt))
 
 class AgentState:
@@ -633,9 +643,9 @@ class AgentState:
         self.allInPayout = 0
 
     def goAllIn(self, state):
-        self.allIn = True
         self.allInPayout = self.money
         self.bet(state, self.allInPayout)
+        self.allIn = True
 
     def addMoney(self, amount):
         self.money += amount
@@ -691,13 +701,13 @@ class AgentState:
 
     def bet(self, gameState, amount):
         # assumes that amount can be bet
-        # print("betting amount {}".format(amount))
-        if amount == 0 and not self.allIn:
+        print("betting amount {}".format(amount))
+        if amount == 0 and not (self.allIn or gameState.hasPlayerCalled(self.index)):
             self.fold()
         else:
             self.hasFolded = False
-            if amount == gameState.data.getCallAmt() or self.allIn:
-                gameState.hasCalled(self.index)
+            if amount == gameState.data.getCallAmt() or self.allIn or gameState.hasPlayerCalled(self.index):
+                gameState.data.setPlayerCalled(self.index)
             # if we're not meeting the call, we must be changing it
             else:
                 gameState.updateCall(amount)
@@ -723,11 +733,9 @@ class GameState:
         for agentState in self.data.agentStates:
             # print(agentState)
             if agentState.index == 0:
-                PlayerRules.newHand(self)
                 PlayerRules.checkBank(self)
                 totalMoney += self.getPlayerMoney()
             else:
-                OpponentRules.newHand(self, agentState.index)
                 OpponentRules.checkBank(self, agentState.index)
                 totalMoney += self.getOpponentMoney(agentState.index)
         if totalMoney != self.getWinningMoney():
@@ -735,6 +743,7 @@ class GameState:
         if not (self.isWin() or self.isLose()):
             self.data.newTable()
             self.data.anteUp(self)
+            self.data.newHands(self)
 
     def getAndResetExplored():
         tmp = GameState.explored.copy()
@@ -747,7 +756,7 @@ class GameState:
         return ClassicGameRules.evaluateHand(self.getHandAndTable())
 
     def getHandAndTable(self, agentIndex=0):
-        return self.data.agentStates[agentIndex].getHand() + self.getTable()
+        return self.data.getAgentHand(agentIndex) + self.getTable()
 
     def printBoard(self, potValue):
         # get dealer hand and pot
@@ -798,16 +807,12 @@ class GameState:
     def getPot(self):
         return self.data.getPot()
 
-    def hasCalled(self, playerIndex):
-        self.data.calledPlayers[playerIndex] = True
-
     def resetCalledPlayers(self, playerIndex):
-        for i in self.data.calledPlayers:
-            i = False
-        self.data.calledPlayers[playerIndex] = True
+        for i in range(len(self.data.agentStates)):
+            self.data.setPlayerCalled(playerIndex, False)
 
-    def playerHasCalled(self, playerIndex):
-        return self.data.calledPlayers[playerIndex]
+    def hasPlayerCalled(self, playerIndex):
+        return self.data.hasPlayerCalled(playerIndex)
 
     def payOut(self):
         # TODO: enforce all-in payout limit
@@ -824,7 +829,6 @@ class GameState:
                         agentStates[i].addMoney(self.data.getPot() % len(agentStates))
                 else:
                     agentStates[i].addMoney(self.data.getPot()/len(agentStates))
-
         self.data.resetPot()
         self.callAmt = self.data.getAnte()
 
@@ -1171,8 +1175,8 @@ class Game:
                 self.state.roundComplete(True)
                 # all players have either called or folded
                 for a in self.state.data.agentStates:
-                    if not (a.getHasFolded() or self.state.playerHasCalled(a.index)):
-                        # print("called {}, folded {}, round continues".format(a.hasFolded, self.state.playerHasCalled(a.index)))
+                    if not (a.getHasFolded() or self.state.hasPlayerCalled(a.index)):
+                        # print("called {}, folded {}, round continues".format(a.hasFolded, self.state.hasPlayerCalled(a.index)))
                         self.state.roundComplete(False)
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)
