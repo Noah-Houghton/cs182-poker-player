@@ -462,15 +462,9 @@ class GameStateData:
                     num += 1
         return num
 
-    def hasPlayerCalled(self, agentIndex):
-        return self.calledPlayers[agentIndex]
-
-    def setPlayerCalled(self, agentIndex=0, value=True):
-        self.calledPlayers[agentIndex] = value
-
-    def getAgentHand(self, agentIndex):
-        return self.agentStates[agentIndex].getHand()
-
+    ##############
+    # DECK LOGIC #
+    ##############
 
     def draw(self):
         try:
@@ -495,9 +489,21 @@ class GameStateData:
             # print("returning card {}".format(card))
             self.discardedCards.append(card)
             self.drawnCards.remove(card)
-        # print("discarded now {}".format(self.discardedCards))
-        if len(self.discardedCards) == self.deckSize:
-            self.reshuffle()
+    # print("discarded now {}".format(self.discardedCards))
+    if len(self.discardedCards) == self.deckSize:
+        self.reshuffle()
+
+    def hasPlayerCalled(self, agentIndex):
+        return self.calledPlayers[agentIndex]
+
+    def setPlayerCalled(self, agentIndex=0, value=True):
+        self.calledPlayers[agentIndex] = value
+
+    def getAgentHand(self, agentIndex):
+        return self.agentStates[agentIndex].getHand()
+
+
+
 
 
     def getTable(self):
@@ -642,20 +648,28 @@ class AgentState:
         self.allIn = False
         self.allInPayout = 0
 
-    def goAllIn(self, state):
-        self.allInPayout = self.money
-        self.bet(state, self.allInPayout)
-        self.allIn = True
-
     def addMoney(self, amount):
-        self.money += amount
-
-    def getHasFolded(self):
-        return self.hasFolded
+        self.mone += amount
 
     def newHand(self, gameState):
-        self.hand = gameState.newHand(self.hand)
-        self.hasFolded = False
+        # return cards to deck
+        gameState.returnCards()
+
+    def getHasFolded(self):
+
+    def goAllIn(self, state):
+
+
+
+    def getMoney(self):
+
+    def getBet(self):
+
+    def fold(self):
+
+    def bet(self, gameState, amount):
+
+    def getHand(self):
 
     def __str__( self ):
         if self.isPlayer:
@@ -689,44 +703,15 @@ class AgentState:
         state.allInPayout = self.allInPayout
         return state
 
-    def getMoney(self):
-        return self.money
-
-    def getBet(self):
-        return self.latestBet
-
-    def fold(self):
-        self.hasFolded = True
-        self.latestBet = 0
-
-    def bet(self, gameState, amount):
-        # assumes that amount can be bet
-        print("betting amount {}".format(amount))
-        if amount == 0 and not (self.allIn or gameState.hasPlayerCalled(self.index)):
-            self.fold()
-        else:
-            self.hasFolded = False
-            if amount == gameState.data.getCallAmt() or self.allIn or gameState.hasPlayerCalled(self.index):
-                gameState.data.setPlayerCalled(self.index)
-            # if we're not meeting the call, we must be changing it
-            else:
-                gameState.updateCall(amount)
-                gameState.resetCalledPlayers(self.index)
-            self.money -= amount
-            if self.money < 0:
-                raise Exception("No agent can have negative money ({})".format(self.money))
-            gameState.addPot(amount)
-        if not self.allIn:
-            self.latestBet = amount
-
-    def getHand(self):
-        return self.hand
-
 class GameState:
 
     # static variable to keep track of visited States
     explored = set()
 
+
+    ##############
+    # GAME LOGIC #
+    ##############
     def newRound(self):
         # occurs after payout from the previous round
         totalMoney = 0
@@ -744,6 +729,8 @@ class GameState:
             self.data.newTable()
             self.data.anteUp(self)
             self.data.newHands(self)
+
+
 
     def getAndResetExplored():
         tmp = GameState.explored.copy()
