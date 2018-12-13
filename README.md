@@ -13,7 +13,7 @@ pip install pypokergui
 
 ## To Run
 ### Command Line w/ GUI
-setupgame.py -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -sb <small_blind> -p <agentType> -n <num_Agents>
+setupgame.py -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -sb <small_blind> -p <agent_Type> -n <num_Agents>
 
 pypokergui serve poker_conf.yaml --port 8000 --speed moderate
 
