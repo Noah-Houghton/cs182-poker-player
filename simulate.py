@@ -60,7 +60,7 @@ def main(argv):
         opponent = module.setup_ai()
         # class_ = getattr(module, opponentType)
         bots.append(opponent)
-    config = {"r":r, "a":a, "b":b, "s":s, "r":r, "sb":sb}
+    config = {"r":r, "a":a, "b":b, "s":s, "r":r, "sb":sb, "agentType":agentType, "opponentType":opponentType}
     runGames(bots, numAgents, numGames, agent, config)
 
 def runGames(bots, numAgents, numGames, agent, conf):
@@ -74,6 +74,8 @@ def runGames(bots, numAgents, numGames, agent, conf):
         # prints the average stack as the games advance
         stack_log.append([player['stack'] for player in game_result['players'] if player['uuid'] == agent.uuid])
         print("Avg. agent stack as of game {}: {}".format(round+1, int(np.mean(stack_log))))
+    print("Finished simulating {} games with config:".format(numGames))
+    print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
 
 if __name__ == '__main__':
     main(sys.argv[1:])
