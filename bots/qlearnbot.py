@@ -118,8 +118,5 @@ class QLearnBot(BasePokerPlayer):
         self.wins += int(is_winner)
         self.losses += int(not is_winner)
 
-
-
-
 def setup_ai():
     return QLearnBot()
