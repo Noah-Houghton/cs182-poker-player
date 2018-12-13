@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# game config
+poker_conf.yaml
+
 # C extensions
 *.so
 
