@@ -7,9 +7,9 @@ Built using the amazing PyPokerEngine (https://github.com/ishikota/PyPokerEngine
 GUI (https://github.com/ishikota/PyPokerGUI)
 
 ## Dependencies
-pip install PyPokerEngine
+`pip install PyPokerEngine`
 
-pip install pypokergui
+`pip install pypokergui`
 
 ## To Run
 ### Command Line w/ GUI
