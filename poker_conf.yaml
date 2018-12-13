@@ -1,10 +1,10 @@
 ai_players:
 - name: Player 0
-  path: montecarlobot.py
+  path: bots/callbot.py
 - name: Player 1
-  path: montecarlobot.py
-ante: 5
+  path: bots/callbot.py
+ante: 0
 blind_structure: null
-initial_stack: 250
-max_round: 5
+initial_stack: 100
+max_round: 10
 small_blind: 10

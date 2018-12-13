@@ -54,7 +54,7 @@ def main(argv):
         if setup [-3:] != ".py":
             setup += ".py"
     for i in range(numAgents):
-        pl.append({"name": "Player {}".format(i), "path": setup.lower()})
+        pl.append({"name": "Player {}".format(i), "path": "bots/"+setup.lower()})
     data = dict(
         ante = a,
         blind_structure = b,
