@@ -14,7 +14,7 @@ def main(argv):
     pl = []
     setup = 'fishbot.py'
     numAgents = 2
-    helpMessage = 'setupgame.py -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -sb <small_blind> -p <agentType>.py -n <numAgents>'
+    helpMessage = 'setupgame.py -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -p <agentType>.py -n <numAgents>'
     try:
         opts, args = getopt.getopt(argv, "ha:b:s:r:sb:p:n:", ["ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "agentType=", "numAgents="])
     except getopt.GetoptError:
@@ -32,7 +32,7 @@ def main(argv):
             s = int(arg)
         elif opt in ('-r', "--max_round"):
             r = int(arg)
-        elif opt in ('-sb', "--small_blind"):
+        elif opt in ('-m', "--small_blind"):
             sb = int(arg)
         elif opt in ('-p', "--agentType"):
             setup = arg

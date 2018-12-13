@@ -4,12 +4,25 @@ import sys, getopt
 import importlib
 # import agents
 
+"""
+Example command line to run with default config
+python simulate.py -a MonteCarloBot -o FishBot -n 3 -g 10
+
+Example command line to run with custom config
+python simulate.py -a MonteCarloBot -o FishBot -n 3 -g 10 -t 5 -s 500 -r 15 -m 15
+"""
 
 
 def main(argv):
-    helpMessage = 'simulate.py -a <agentType> -o <opponentType> -n <numOpponents> -g <numGames>'
+    # defaults for config
+    a = 0
+    b = {}
+    s = 100
+    r = 10
+    sb = 10
+    helpMessage = 'simulate.py -a <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -t <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind>'
     try:
-        opts, args = getopt.getopt(argv, "ha:n:g:o:", ["agentType=", "numOpponents=", "numGames=", "opponentType="])
+        opts, args = getopt.getopt(argv, "ha:n:g:o:t:s:r:m:b:", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind="])
     except getopt.GetoptError:
         print(helpMessage)
         sys.exit(2)
@@ -25,6 +38,16 @@ def main(argv):
             numAgents = int(arg)
         elif opt in ('-g', "--numGames"):
             numGames = int(arg)
+        elif opt in ("-t", "--ante"):
+            a = int(arg)
+        elif opt in ("-b", "--blind_structure"):
+            b = arg
+        elif opt in ('-s', "--initial_stack"):
+            s = int(arg)
+        elif opt in ('-r', "--max_round"):
+            r = int(arg)
+        elif opt in ('-m', "--small_blind"):
+            sb = int(arg)
 
     bots = []
     module = importlib.import_module(agentType.lower())
@@ -37,14 +60,16 @@ def main(argv):
         opponent = module.setup_ai()
         # class_ = getattr(module, opponentType)
         bots.append(opponent)
-    runGames(bots, numAgents, numGames, agent)
+    config = {"r":r, "a":a, "b":b, "s":s, "r":r, "sb":sb}
+    runGames(bots, numAgents, numGames, agent, config)
 
-def runGames(bots, numAgents, numGames, agent):
+def runGames(bots, numAgents, numGames, agent, conf):
     stack_log = []
     for round in range(numGames):
-        config = setup_config(max_round=5, initial_stack=100, small_blind_amount=5)
+        config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
         for i in range(numAgents):
             config.register_player(name=("Player {}".format(i+1)), algorithm=bots[i])
+        config.set_blind_structure(conf["b"])
         game_result = start_poker(config, verbose=0)
         # prints the average stack as the games advance
         stack_log.append([player['stack'] for player in game_result['players'] if player['uuid'] == agent.uuid])
