@@ -1,6 +1,5 @@
 import fileinput
 from pypokerengine.api.game import setup_config, start_poker
-from fishbot import FishBot
 import yaml
 import sys, getopt
 
