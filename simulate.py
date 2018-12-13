@@ -65,6 +65,7 @@ def main(argv):
 
 def runGames(bots, numAgents, numGames, agent, conf):
     stack_log = []
+    nVictories = 0
     for round in range(numGames):
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
         for i in range(numAgents):
@@ -73,7 +74,15 @@ def runGames(bots, numAgents, numGames, agent, conf):
         game_result = start_poker(config, verbose=0)
         # prints the average stack as the games advance
         stack_log.append([player['stack'] for player in game_result['players'] if player['uuid'] == agent.uuid])
-        print("Avg. agent stack as of game {}: {}".format(round+1, int(np.mean(stack_log))))
+        print("game {} complete".format(round+1))
+        allStacks = [player['stack'] for player in game_result['players']]
+        if max(allStacks) == stack_log[round][0]:
+            nVictories += 1
+            print("Agent won")
+        else:
+            print("Agent lost")
+    print("Avg. agent stack after {} games: {}".format(numGames, int(np.mean(stack_log))))
+    print("Agent won {} games out of {}".format(nVictories, numGames))
     print("Finished simulating {} games with config:".format(numGames))
     print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
 
