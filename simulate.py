@@ -20,9 +20,10 @@ def main(argv):
     s = 100
     r = 10
     sb = 10
-    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind>'
+    numTraining = 0
+    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining>'
     try:
-        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind="])
+        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining="])
     except getopt.GetoptError:
         print(helpMessage)
         sys.exit(2)
@@ -48,6 +49,8 @@ def main(argv):
             r = int(arg)
         elif opt in ('-m', "--small_blind"):
             sb = int(arg)
+        elif opt in ('-t', "--numTraining"):
+            numTraining = int(arg)
 
     bots = []
     module = importlib.import_module('.'+agentType.lower(), package="bots")
@@ -61,11 +64,18 @@ def main(argv):
         # class_ = getattr(module, opponentType)
         bots.append(opponent)
     config = {"r":r, "a":a, "b":b, "s":s, "r":r, "sb":sb, "agentType":agentType, "opponentType":opponentType}
-    runGames(bots, numAgents, numGames, agent, config)
+    runGames(bots, numAgents, numGames, agent, config, numTraining)
 
-def runGames(bots, numAgents, numGames, agent, conf):
+def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     stack_log = []
     nVictories = 0
+    for round in range(numTraining):
+        # run numTraining training games
+        config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
+        for i in range(numAgents):
+            config.register_player(name=("Player {}".format(i+1)), algorithm=bots[i])
+        config.set_blind_structure(conf["b"])
+        start_poker(config, verbose=0)
     for round in range(numGames):
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
         for i in range(numAgents):
