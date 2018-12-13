@@ -9,7 +9,7 @@ Example command line to run with default config
 python simulate.py -p MonteCarloBot -o FishBot -n 3 -g 10
 
 Example command line to run with custom config
-python simulate.py -p MonteCarloBot -o FishBot -n 3 -g 10 -a 5 -s 500 -r 15 -m 15
+python simulate.py -p MonteCarloBot -o RandomBot -n 3 -g 10 -a 5 -s 500 -r 15 -m 15
 """
 
 
@@ -50,13 +50,13 @@ def main(argv):
             sb = int(arg)
 
     bots = []
-    module = importlib.import_module(agentType.lower())
+    module = importlib.import_module('.'+agentType.lower(), package="bots")
     agent = module.setup_ai()
     # class_ = getattr(module, agentType)
     # agent = class_()
     bots.append(agent)
     for _ in range(numAgents):
-        module = importlib.import_module(opponentType.lower())
+        module = importlib.import_module('.'+opponentType.lower(), package="bots")
         opponent = module.setup_ai()
         # class_ = getattr(module, opponentType)
         bots.append(opponent)
