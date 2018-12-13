@@ -7,9 +7,9 @@ import importlib
 
 
 def main(argv):
-    helpMessage = 'simulate.py -a <agentType> -o <numOpponents> -n <numGames>'
+    helpMessage = 'simulate.py -a <agentType> -o <opponentType> -n <numOpponents> -g <numGames>'
     try:
-        opts, args = getopt.getopt(argv, "ha:n:g:o:", ["agentType=", "numAgents=", "numGames=", "opponentType="])
+        opts, args = getopt.getopt(argv, "ha:n:g:o:", ["agentType=", "numOpponents=", "numGames=", "opponentType="])
     except getopt.GetoptError:
         print(helpMessage)
         sys.exit(2)
@@ -28,25 +28,27 @@ def main(argv):
 
     bots = []
     module = importlib.import_module(agentType.lower())
-    class_ = getattr(module, agentType)
-    agent = class_()
+    agent = module.setup_ai()
+    # class_ = getattr(module, agentType)
+    # agent = class_()
     bots.append(agent)
     for _ in range(numAgents):
         module = importlib.import_module(opponentType.lower())
-        class_ = getattr(module, opponentType)
-        bots.append(class_())
+        opponent = module.setup_ai()
+        # class_ = getattr(module, opponentType)
+        bots.append(opponent)
     runGames(bots, numAgents, numGames, agent)
 
 def runGames(bots, numAgents, numGames, agent):
     stack_log = []
-    config = setup_config(max_round=5, initial_stack=100, small_blind_amount=5)
     for round in range(numGames):
+        config = setup_config(max_round=5, initial_stack=100, small_blind_amount=5)
         for i in range(numAgents):
             config.register_player(name=("Player {}".format(i+1)), algorithm=bots[i])
         game_result = start_poker(config, verbose=0)
-        # prints the average stack for each game
+        # prints the average stack as the games advance
         stack_log.append([player['stack'] for player in game_result['players'] if player['uuid'] == agent.uuid])
-        print('Avg. stack:', '%d' % (int(np.mean(stack_log))))
+        print("Avg. agent stack as of game {}: {}".format(round+1, int(np.mean(stack_log))))
 
 if __name__ == '__main__':
     main(sys.argv[1:])
