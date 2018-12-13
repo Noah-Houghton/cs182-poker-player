@@ -62,7 +62,7 @@ class QLearnBot(BasePokerPlayer):
 
     def declare_action(self, valid_actions, hole_card, round_state):
 
-        
+
         # # Estimate the win rate
         # win_rate = estimate_win_rate(100, self.num_players, hole_card, round_state['community_card'])
         #
@@ -118,8 +118,5 @@ class QLearnBot(BasePokerPlayer):
         self.wins += int(is_winner)
         self.losses += int(not is_winner)
 
-
-
-
 def setup_ai():
-    return MonteCarloBot()
+    return QLearnBot()
