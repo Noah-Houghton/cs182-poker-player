@@ -19,7 +19,7 @@ pypokergui serve poker_conf.yaml --port 8000 --speed moderate
 def main(argv):
     # default values
     a = 0
-    b = None
+    b = {}
     s = 100
     r = 10
     sb = 10
