@@ -6,10 +6,10 @@ import importlib
 
 """
 Example command line to run with default config
-python simulate.py -a MonteCarloBot -o FishBot -n 3 -g 10
+python simulate.py -p MonteCarloBot -o FishBot -n 3 -g 10
 
 Example command line to run with custom config
-python simulate.py -a MonteCarloBot -o FishBot -n 3 -g 10 -t 5 -s 500 -r 15 -m 15
+python simulate.py -p MonteCarloBot -o FishBot -n 3 -g 10 -a 5 -s 500 -r 15 -m 15
 """
 
 
@@ -20,9 +20,9 @@ def main(argv):
     s = 100
     r = 10
     sb = 10
-    helpMessage = 'simulate.py -a <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -t <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind>'
+    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind>'
     try:
-        opts, args = getopt.getopt(argv, "ha:n:g:o:t:s:r:m:b:", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind="])
+        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind="])
     except getopt.GetoptError:
         print(helpMessage)
         sys.exit(2)
@@ -30,7 +30,7 @@ def main(argv):
         if opt == "-h":
             print(helpMessage)
             sys.exit()
-        elif opt in ("-a", "--agentType"):
+        elif opt in ("-p", "--agentType"):
             agentType = arg
         elif opt in ("-o", "--opponentType"):
             opponentType = arg
@@ -38,7 +38,7 @@ def main(argv):
             numAgents = int(arg)
         elif opt in ('-g', "--numGames"):
             numGames = int(arg)
-        elif opt in ("-t", "--ante"):
+        elif opt in ("-a", "--ante"):
             a = int(arg)
         elif opt in ("-b", "--blind_structure"):
             b = arg
