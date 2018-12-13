@@ -12,13 +12,18 @@ GUI (https://github.com/ishikota/PyPokerGUI)
 `pip install pypokergui`
 
 ## To Run
-### Command Line w/ GUI
+### Single game with GUI
+First, run this command to automatically generate a config file (you can edit this later if you wish or re-run the command).
 
-`setupgame.py -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -sb <small_blind> -p <agentType> -n <numAgents>`
+`python setupgame.py -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -p <agentType>.py -n <numAgents>`
+
+Now, run this command to start the server and play!
 
 `pypokergui serve poker_conf.yaml --port 8000 --speed moderate`
 ### Command Line, Many Games (no GUI)
-`simulate.py -a <agentType> -o <opponentType> -n <numOpponents> -g <numGames>`
+This command simulates many games running.
+
+`python simulate.py -a <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -t <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind>`
 
 
 ## Coding an Agent
@@ -53,6 +58,8 @@ class FishPlayer(BasePokerPlayer):  # Do not forget to make parent class "BasePo
 Each file should have a function defined at the bottom of the file outside the class code which implements setup_ai(), which returns an object of the class type. For example:
 
 `setup_ai(): return exampleAgent()`
+
+would go after receive_round_result_message(), tabbed in at the same level as class FishPlayer().
 
 ### Examples
 - MonteCarloBot: https://www.data-blogger.com/2017/11/01/pokerbot-create-your-poker-ai-bot-in-python/
