@@ -27,7 +27,7 @@ This command simulates many games running.
 
 
 ## Coding an Agent
-Agents should be set up in their own python file. Ensure that the name of the agent is the same as the file (camelCase does not have to match), e.g. exampleagent.py contains ExampleAgent().
+Agents should be set up in their own python file. Ensure that the name of the agent is the same as the file (camelCase does not have to match), e.g. exampleagent.py contains ExampleAgent(). Although your agent can be named in camelcase, IT IS CRUCIAL THAT YOU DO NOT HAVE A FILE NAME IN CAMELCASE. File names should be in lowercase as one word - violating this invariant will break setupgame.py, which means you'll have to manually edit the poker_conf.yaml file.
 
 Agents have to implement the following functions:
 ~~~~
