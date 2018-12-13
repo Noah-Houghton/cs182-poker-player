@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # game config
-poker_conf.yaml
+*.yaml
 
 # C extensions
 *.so

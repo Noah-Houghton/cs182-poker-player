@@ -4,6 +4,19 @@ from fishbot import FishBot
 import yaml
 import sys, getopt
 
+"""
+Sample command to setup default game, no args
+python setupgame.py
+
+Sample command to set game with some args
+python setupgame.py -a 5 -s 250 -r 5 -m 10 -p MonteCarloBot.py
+
+Run game using
+pypokergui serve poker_conf.yaml --port 8000 --speed moderate
+
+"""
+
+
 def main(argv):
     # default values
     a = 0
@@ -16,7 +29,7 @@ def main(argv):
     numAgents = 2
     helpMessage = 'setupgame.py -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -p <agentType>.py -n <numAgents>'
     try:
-        opts, args = getopt.getopt(argv, "ha:b:s:r:sb:p:n:", ["ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "agentType=", "numAgents="])
+        opts, args = getopt.getopt(argv, "ha:b:s:r:m:p:n:", ["ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "agentType=", "numAgents="])
     except getopt.GetoptError:
         print(helpMessage)
         sys.exit(2)
@@ -41,7 +54,7 @@ def main(argv):
         if setup [-3:] != ".py":
             setup += ".py"
     for i in range(numAgents):
-        pl.append({"name": "Player {}".format(i), "path": setup})
+        pl.append({"name": "Player {}".format(i), "path": setup.lower()})
     data = dict(
         ante = a,
         blind_structure = b,
