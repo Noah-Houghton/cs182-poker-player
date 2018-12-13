@@ -62,6 +62,9 @@ Each file should have a function defined at the bottom of the file outside the c
 - More about callback functions: https://github.com/ishikota/PyPokerEngine/blob/master/AI_CALLBACK_FORMAT.md
     - Goes through what each function is actually receiving, will be useful when building our agents.
 
+### Algorithms
+- SARSA (https://en.wikipedia.org/wiki/State%E2%80%93action%E2%80%93reward%E2%80%93state%E2%80%93action)
+
 # Internal Checklist
 ## Kyle
 - [ ] Lookahead
