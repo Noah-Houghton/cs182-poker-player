@@ -1,4 +1,4 @@
-
+# from https://ishikota.github.io/PyPokerEngine/tutorial/simulate_the_game_by_emulator/
 from pypokerengine.players import BasePokerPlayer
 from pypokerengine.api.emulator import Emulator
 from pypokerengine.utils.card_utils import gen_cards

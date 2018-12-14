@@ -1,4 +1,3 @@
-# from https://www.data-blogger.com/2017/11/01/pokerbot-create-your-poker-ai-bot-in-python/
 from pypokerengine.engine.hand_evaluator import HandEvaluator
 from pypokerengine.players import BasePokerPlayer
 from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_card, gen_cards
@@ -97,7 +96,7 @@ class QLearnBot(BasePokerPlayer):
                 adjusted_montecarlo_simulation(self.num_players, self.hand, gen_cards(round_state['community_card'])) * round_state['pot']['main']['amount'])
         self.pot = round_state['pot']['main']['amount']
         self.cc = gen_cards(round_state['community_card'])
-        
+
     def receive_game_update_message(self, action, round_state):
         pass
 

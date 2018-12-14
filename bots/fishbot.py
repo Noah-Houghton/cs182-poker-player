@@ -1,3 +1,4 @@
+# from documentation at https://github.com/ishikota/PyPokerEngine
 from pypokerengine.players import BasePokerPlayer
 
 class FishBot(BasePokerPlayer):
