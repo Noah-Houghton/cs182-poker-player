@@ -26,6 +26,9 @@ class QLearnBot(BasePokerPlayer):
         self.discount = .1
         self.wins = 0
         self.losses = 0
+        self.hand = []
+        self.pot = 0
+        self.cc = []
 
     def getQValue(self, state, action):
         return self.qvalues[(state,action)]
@@ -66,6 +69,7 @@ class QLearnBot(BasePokerPlayer):
         nextactionvalues = self.computeValueFromQValues(nextState)
 
         actionvalue = self.getQValue(state,action)
+
 
 
         self.qvalues[(state, action)] = (1-self.alpha) * actionvalue + self.alpha * (reward + self.discount * nextactionvalues)
@@ -116,11 +120,20 @@ class QLearnBot(BasePokerPlayer):
         self.num_players = game_info['player_num']
 
     def receive_round_start_message(self, round_count, hole_card, seats):
-        pass
+        self.hand = hole_card
+        self.cc = []
+        self.pot = 0
 
     def receive_street_start_message(self, street, round_state):
-        pass
 
+        if street != 'preflop':
+            self.update(self.num_players, (HandEvaluator.eval_hand(self.hand, self.cc), self.pot),
+                (HandEvaluator.eval_hand(self.hand, round_state['community_card']), round_state['pot']['main']),
+                adjusted_montecarlo_simulation(self.num_players, self.hand, round_state['community_card']) * round_state['pot']['main'])
+
+        self.pot = round_state['pot']['main']
+
+        self.cc = round_state['community_card']
     def receive_game_update_message(self, action, round_state):
         pass
 
