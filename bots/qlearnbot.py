@@ -4,9 +4,8 @@ from pypokerengine.players import BasePokerPlayer
 from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_card, gen_cards
 import numpy as np
 import time
-import random
+import random as rand
 import util
-import montecarolbot
 
 def adjusted_montecarlo_simulation(nb_player, hole_card, community_card):
     # Do a Monte Carlo simulation given the current state of the game by evaluating the hands
@@ -29,6 +28,7 @@ class QLearnBot(BasePokerPlayer):
         self.hand = []
         self.pot = 0
         self.cc = []
+        self.latestAction = None
 
     def getQValue(self, state, action):
         return self.qvalues[(state,action)]
@@ -44,96 +44,63 @@ class QLearnBot(BasePokerPlayer):
                 max = self.getQValue(state,action)
         return max
 
-    def computeActionFromQValues(self, state, action):
+    def computeActionFromQValues(self, state, actions):
         if len(actions) == 0:
             return None
         max = float("-inf")
         maxAction = None
         for action in actions:
-            if self.getQValue(state, action) == max:
+            if self.getQValue(state, action["action"]) == max:
                 if util.flipCoin(.5):
-                    max = self.getQValue(state,action)
+                    max = self.getQValue(state,action["action"])
                     maxAction = action
-            elif self.getQValue(state,action) > max:
-                max = self.getQValue(state,action)
+            elif self.getQValue(state,action["action"]) > max:
+                max = self.getQValue(state,action["action"])
                 maxAction = action
         return maxAction
 
     def getAction(self, state, actions):
         if util.flipCoin(self.epsilon):
-            return random.choice(actions)
+            return rand.choice(actions)
         else:
             return self.computeActionFromQValues(state, actions)
 
     def update(self, state, action, next_state, reward):
-        nextactionvalues = self.computeValueFromQValues(nextState)
-
+        nextactionvalues = self.computeValueFromQValues(next_state, [action])
         actionvalue = self.getQValue(state,action)
-
-
-
         self.qvalues[(state, action)] = (1-self.alpha) * actionvalue + self.alpha * (reward + self.discount * nextactionvalues)
 
 
     def declare_action(self, valid_actions, hole_card, round_state):
-
-        reward = adjusted_montecarlo_simulation(nb_player, hole_card, community_card) * round_state['pot']['main']
-        # # Estimate the win rate
-        # win_rate = estimate_win_rate(100, self.num_players, hole_card, round_state['community_card'])
-        #
-        # action = getAction(hole_card, valid_actions)
-        # # Check whether it is possible to call
-        # can_call = len([item for item in valid_actions if item['action'] == 'call']) > 0
-        # if can_call:
-        #     # If so, compute the amount that needs to be called
-        #     call_amount = [item for item in valid_actions if item['action'] == 'call'][0]['amount']
-        # else:
-        #     call_amount = 0
-        #
-        # amount = None
-        #
-        # # If the win rate is large enough, then raise
-        # if win_rate > 0.5:
-        #     raise_amount_options = [item for item in valid_actions if item['action'] == 'raise'][0]['amount']
-        #     if win_rate > 0.85:
-        #         # If it is extremely likely to win, then raise as much as possible
-        #         action = 'raise'
-        #         amount = raise_amount_options['max']
-        #     elif win_rate > 0.75:
-        #         # If it is likely to win, then raise by the minimum amount possible
-        #         action = 'raise'
-        #         amount = raise_amount_options['min']
-        #     else:
-        #         # If there is a chance to win, then call
-        #         action = 'call'
-        # else:
-        #     action = 'call' if can_call and call_amount == 0 else 'fold'
-        #
-        # # Set the amount
-        # if amount is None:
-        #     items = [item for item in valid_actions if item['action'] == action]
-        #     amount = items[0]['amount']
-
+        community_card = gen_cards(round_state["community_card"])
+        hole_card = gen_cards(hole_card)
+        handStrength = HandEvaluator.eval_hand(hole_card, community_card)
+        choice = self.getAction((handStrength, round_state["pot"]["main"]["amount"]), valid_actions)
+        action = choice["action"]
+        amount = choice["amount"]
+        if action == 'raise':
+            amount = rand.randrange(amount["min"], max(amount["min"], amount["max"]) + 1)
+        self.latestAction = action
         return action, amount
 
     def receive_game_start_message(self, game_info):
         self.num_players = game_info['player_num']
 
     def receive_round_start_message(self, round_count, hole_card, seats):
-        self.hand = hole_card
+        self.hand = gen_cards(hole_card)
         self.cc = []
         self.pot = 0
 
     def receive_street_start_message(self, street, round_state):
 
         if street != 'preflop':
-            self.update(self.num_players, (HandEvaluator.eval_hand(self.hand, self.cc), self.pot),
-                (HandEvaluator.eval_hand(self.hand, round_state['community_card']), round_state['pot']['main']),
-                adjusted_montecarlo_simulation(self.num_players, self.hand, round_state['community_card']) * round_state['pot']['main'])
+            self.update((HandEvaluator.eval_hand(self.hand, self.cc), self.pot), self.latestAction,
+                (HandEvaluator.eval_hand(self.hand, gen_cards(round_state['community_card'])), round_state['pot']['main']['amount']),
+                adjusted_montecarlo_simulation(self.num_players, self.hand, gen_cards(round_state['community_card'])) * round_state['pot']['main']['amount'])
 
-        self.pot = round_state['pot']['main']
+        self.pot = round_state['pot']['main']['amount']
 
-        self.cc = round_state['community_card']
+        self.cc = gen_cards(round_state['community_card'])
     def receive_game_update_message(self, action, round_state):
         pass
 
