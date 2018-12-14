@@ -16,6 +16,8 @@ class QLearnBot(BasePokerPlayer):
         self.epsilon = .08
         self.alpha = .1
         self.discount = .1
+        self.wins = 0
+        self.losses = 0
 
     def getQValue(self, state, action):
         return self.qvalues[(state,action)]
