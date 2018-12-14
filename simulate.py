@@ -99,7 +99,7 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
         if max(allStacks) == stack_log[round][0]:
             nVictories += 1
     print("Avg. agent stack after {} games: {}".format(numGames, int(np.mean(stack_log))))
-    print("Agent won {} games out of {}".format(nVictories, numGames))
+    print("Agent won {} games out of {} (%{})".format(nVictories, numGames, str(nVictories/float(numGames))[-2:]))
     print("Finished simulating {} games with config:".format(numGames))
     print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
     print("Trained for {} games".format(numTraining))

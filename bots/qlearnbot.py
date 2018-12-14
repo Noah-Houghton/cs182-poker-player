@@ -20,9 +20,9 @@ class QLearnBot(BasePokerPlayer):
     def __init__(self):
         super(QLearnBot, self).__init__()
         self.qvalues = util.Counter()
-        self.epsilon = .08
-        self.alpha = .1
-        self.discount = .1
+        self.epsilon = .1
+        self.alpha = .3
+        self.discount = 0
         self.wins = 0
         self.losses = 0
         self.hand = []
