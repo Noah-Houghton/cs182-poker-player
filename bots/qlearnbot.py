@@ -25,9 +25,9 @@ class QLearnBot(BasePokerPlayer):
         self.discount = 0
         self.wins = 0
         self.losses = 0
-        self.hand = []
+        self.hand = None
         self.pot = 0
-        self.cc = []
+        self.cc = None
         self.latestAction = None
 
     def getQValue(self, state, action):
