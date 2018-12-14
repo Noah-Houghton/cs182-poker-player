@@ -73,6 +73,7 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     for round in range(numTraining):
         # run numTraining training games
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
+        CONFIG = config
         for i in range(numAgents):
             config.register_player(name=("Player {}".format(i+1)), algorithm=bots[i])
         config.set_blind_structure(conf["b"])

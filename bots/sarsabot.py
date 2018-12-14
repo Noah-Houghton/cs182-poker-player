@@ -1,11 +1,22 @@
-# from https://www.data-blogger.com/2017/11/01/pokerbot-create-your-poker-ai-bot-in-python/
+# initialize arbitrarily
+
+# for each episode
+
+    # init S
+    # choose A from S using policy derived from Q
+    # Repeat for each step
+        # take action A, observe R, S'
+        # choose A' from S' using policy derived from Q
+        # Q(S,A) <- Q(S,A) + alpha[R + discountQ(S', A') - Q(S,A)]
+        # S <- S'; A <- A';
+    # until S is terminal
+from pypokerengine.utils.game_state_utils import restore_game_state, attach_hole_card_from_deck
 from pypokerengine.engine.hand_evaluator import HandEvaluator
 from pypokerengine.players import BasePokerPlayer
 from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_card, gen_cards
-import numpy as np
-import time
 import random as rand
 import util
+from pypokerengine.api.emulator import Emulator
 
 def adjusted_montecarlo_simulation(nb_player, hole_card, community_card):
     # Do a Monte Carlo simulation given the current state of the game by evaluating the hands
@@ -16,9 +27,9 @@ def adjusted_montecarlo_simulation(nb_player, hole_card, community_card):
     my_score = HandEvaluator.eval_hand(hole_card, community_card)
     return my_score / max(opponents_score)
 
-class QLearnBot(BasePokerPlayer):
+class SARSABot(BasePokerPlayer):
     def __init__(self):
-        super(QLearnBot, self).__init__()
+        super(SARSABot, self).__init__()
         self.qvalues = util.Counter()
         self.epsilon = .1
         self.alpha = .3
@@ -29,6 +40,7 @@ class QLearnBot(BasePokerPlayer):
         self.pot = 0
         self.cc = None
         self.latestAction = None
+        self.latestState = None
 
     def getQValue(self, state, action):
         return self.qvalues[(state,action)]
@@ -63,11 +75,11 @@ class QLearnBot(BasePokerPlayer):
         else:
             return self.computeActionFromQValues(state, actions)
 
-    def update(self, state, action, next_state, reward):
-        nextactionvalues = self.computeValueFromQValues(next_state, [action])
-        actionvalue = self.getQValue(state,action)
-        self.qvalues[(state, action)] = (1-self.alpha) * actionvalue + self.alpha * (reward + self.discount * nextactionvalues)
-
+    def update(self, prev_state, prev_action, curr_state, curr_action, reward, round_state):
+        # prev_value = self.computeValueFromQValues(prev_state, [prev_action["action"]])
+        # self.qvalues[(state, action["action"])] = self.qvalues[(state, action["action"])] + self.alpha * (reward + self.discount * self.qvalues[(next_state, nextAction["action"])] - self.qvalues[(state, action["action"])])
+        self.qvalues[(prev_state, prev_action["action"])] = self.qvalues[(prev_state, prev_action["action"])] + self.alpha * (reward + self.discount * self.qvalues[(curr_state, curr_action["action"])] - self.qvalues[prev_state, prev_action["action"]])
+        # print("updated state {} to value {}".format((prev_state, prev_action["action"]), self.getQValue(prev_state, prev_action["action"])))
 
     def declare_action(self, valid_actions, hole_card, round_state):
         community_card = gen_cards(round_state["community_card"])
@@ -79,11 +91,20 @@ class QLearnBot(BasePokerPlayer):
         if action == 'raise':
             # naively choose a random raise amt between min and max
             amount = rand.randrange(amount["min"], max(amount["min"], amount["max"]) + 1)
-        self.latestAction = action
+            choice["amount"] = amount
+        if not self.latestState == None and not self.latestAction == None:
+            self.update(self.latestState, self.latestAction, (HandEvaluator.eval_hand(self.hand, self.cc), self.pot), choice,
+                # (HandEvaluator.eval_hand(self.hand, gen_cards(round_state['community_card'])), round_state['pot']['main']['amount']),
+                adjusted_montecarlo_simulation(self.num_players, self.hand, self.cc) * self.pot, round_state)
+        self.latestAction = choice
+        self.latestState = (HandEvaluator.eval_hand(self.hand, self.cc), self.pot)
         return action, amount
 
     def receive_game_start_message(self, game_info):
         self.num_players = game_info['player_num']
+        self.ante = game_info["rule"]["ante"]
+        self.max_round = game_info["rule"]["max_round"]
+        self.small_blind_amount = game_info["rule"]["small_blind_amount"]
 
     def receive_round_start_message(self, round_count, hole_card, seats):
         self.hand = gen_cards(hole_card)
@@ -91,13 +112,11 @@ class QLearnBot(BasePokerPlayer):
         self.pot = 0
 
     def receive_street_start_message(self, street, round_state):
-        if street != 'preflop':
-            self.update((HandEvaluator.eval_hand(self.hand, self.cc), self.pot), self.latestAction,
-                (HandEvaluator.eval_hand(self.hand, gen_cards(round_state['community_card'])), round_state['pot']['main']['amount']),
-                adjusted_montecarlo_simulation(self.num_players, self.hand, gen_cards(round_state['community_card'])) * round_state['pot']['main']['amount'])
+        # if street != 'preflop':
+
         self.pot = round_state['pot']['main']['amount']
         self.cc = gen_cards(round_state['community_card'])
-        
+
     def receive_game_update_message(self, action, round_state):
         pass
 
@@ -107,4 +126,4 @@ class QLearnBot(BasePokerPlayer):
         self.losses += int(not is_winner)
 
 def setup_ai():
-    return QLearnBot()
+    return SARSABot()
