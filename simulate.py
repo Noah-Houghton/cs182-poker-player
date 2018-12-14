@@ -69,7 +69,8 @@ def main(argv):
 def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     stack_log = []
     nVictories = 0
-    print("Beginning {} training games".format(numTraining))
+    if not numTraining == 0:
+        print("Beginning {} training games".format(numTraining))
     for round in range(numTraining):
         # run numTraining training games
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
@@ -86,7 +87,8 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
             print("75% trained")
         if round == numTraining*9/10:
             print("90% trained")
-    print("Training complete! Beginning {} games.".format(numGames))
+    if not numTraining == 0:
+        print("Training complete! Beginning {} games.".format(numGames))
     for round in range(numGames):
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
         for i in range(numAgents):
