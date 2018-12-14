@@ -1,6 +1,6 @@
 from pypokerengine.api.game import start_poker, setup_config
 import numpy as np
-import sys, getopt
+import sys, getopt, time
 import importlib
 # import agents
 
@@ -71,6 +71,7 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     nVictories = 0
     if not numTraining == 0:
         print("Beginning {} training games".format(numTraining))
+        trainingTime = time.time()
     for round in range(numTraining):
         # run numTraining training games
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
@@ -89,6 +90,8 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
             print("90% trained")
     if not numTraining == 0:
         print("Training complete! Beginning {} games.".format(numGames))
+        trainingTime = time.time() - trainingTime
+    gameTime = time.time()
     for round in range(numGames):
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
         for i in range(numAgents):
@@ -101,8 +104,12 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
         allStacks = [player['stack'] for player in game_result['players']]
         if max(allStacks) == stack_log[round][0]:
             nVictories += 1
+    gameTime = time.time() - gameTime
+    if not numTraining == 0:
+        print("training time: {} seconds".format(trainingTime))
+    print("Average game time {} seconds".format(gameTime / float(numGames)))
     print("Avg. agent stack after {} games: {}".format(numGames, int(np.mean(stack_log))))
-    print("Agent won {} games out of {} (%{})".format(nVictories, numGames, str(nVictories/float(numGames))[-2:]))
+    print("Agent won {} games out of {}".format(nVictories, numGames) +"({0:.0%})".format(nVictories/float(numGames)))
     print("Finished simulating {} games with config:".format(numGames))
     print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
     print("Trained for {} games".format(numTraining))
