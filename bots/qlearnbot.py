@@ -6,8 +6,16 @@ import numpy as np
 import time
 import random
 import util
+import montecarolbot
 
-
+def adjusted_montecarlo_simulation(nb_player, hole_card, community_card):
+    # Do a Monte Carlo simulation given the current state of the game by evaluating the hands
+    community_card = _fill_community_card(community_card, used_card=hole_card + community_card)
+    unused_cards = _pick_unused_card((nb_player - 1) * 2, hole_card + community_card)
+    opponents_hole = [unused_cards[2 * i:2 * i + 2] for i in range(nb_player - 1)]
+    opponents_score = [HandEvaluator.eval_hand(hole, community_card) for hole in opponents_hole]
+    my_score = HandEvaluator.eval_hand(hole_card, community_card)
+    return my_score / max(opponents_score)
 
 class QLearnBot(BasePokerPlayer):
     def __init__(self):
@@ -59,12 +67,13 @@ class QLearnBot(BasePokerPlayer):
 
         actionvalue = self.getQValue(state,action)
 
+
         self.qvalues[(state, action)] = (1-self.alpha) * actionvalue + self.alpha * (reward + self.discount * nextactionvalues)
 
 
     def declare_action(self, valid_actions, hole_card, round_state):
 
-
+        reward = adjusted_montecarlo_simulation(nb_player, hole_card, community_card) * round_state['pot']['main']
         # # Estimate the win rate
         # win_rate = estimate_win_rate(100, self.num_players, hole_card, round_state['community_card'])
         #
