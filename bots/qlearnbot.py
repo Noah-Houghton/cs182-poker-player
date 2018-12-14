@@ -79,6 +79,7 @@ class QLearnBot(BasePokerPlayer):
         action = choice["action"]
         amount = choice["amount"]
         if action == 'raise':
+            # naively choose a random raise amt between min and max
             amount = rand.randrange(amount["min"], max(amount["min"], amount["max"]) + 1)
         self.latestAction = action
         return action, amount

@@ -69,6 +69,7 @@ def main(argv):
 def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     stack_log = []
     nVictories = 0
+    print("Beginning {} training games".format(numTraining))
     for round in range(numTraining):
         # run numTraining training games
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
@@ -76,6 +77,15 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
             config.register_player(name=("Player {}".format(i+1)), algorithm=bots[i])
         config.set_blind_structure(conf["b"])
         start_poker(config, verbose=0)
+        if round == numTraining/4:
+            print("25% trained")
+        if round == numTraining/2:
+            print("50% trained")
+        if round == numTraining*3/4:
+            print("75% trained")
+        if round == numTraining*9/10:
+            print("90% trained")
+    print("Training complete! Beginning {} games.".format(numGames))
     for round in range(numGames):
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
         for i in range(numAgents):
@@ -88,13 +98,11 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
         allStacks = [player['stack'] for player in game_result['players']]
         if max(allStacks) == stack_log[round][0]:
             nVictories += 1
-            print("Agent won")
-        else:
-            print("Agent lost")
     print("Avg. agent stack after {} games: {}".format(numGames, int(np.mean(stack_log))))
     print("Agent won {} games out of {}".format(nVictories, numGames))
     print("Finished simulating {} games with config:".format(numGames))
     print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
+    print("Trained for {} games".format(numTraining))
 
 if __name__ == '__main__':
     main(sys.argv[1:])
