@@ -92,7 +92,7 @@ class EmulatorBot(BasePokerPlayer):
     def receive_round_result_message(self, winners, hand_info, round_state):
         is_winner = self.uuid in [item['uuid'] for item in winners]
         self.roundWins += int(is_winner)
-        self.roundlosses += int(not is_winner)
+        self.roundLosses += int(not is_winner)
 
 class OneActionModel(BasePokerPlayer):
 
