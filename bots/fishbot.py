@@ -3,6 +3,12 @@ from pypokerengine.players import BasePokerPlayer
 
 class FishBot(BasePokerPlayer):
 
+
+    def __init__():
+        super(FishBot, self).__init__()
+        self.roundWins = 0
+        self.roundLosses = 0
+
     def declare_action(self, valid_actions, hole_card, round_state):
         # valid_actions format => [raise_action_info, call_action_info, fold_action_info]
         call_action_info = valid_actions[1]
@@ -22,7 +28,9 @@ class FishBot(BasePokerPlayer):
         pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
-        pass
+        is_winner = self.uuid in [item['uuid'] for item in winners]
+        self.roundWins += int(is_winner)
+        self.roundlosses += int(not is_winner)
 
 def setup_ai():
     return FishBot()

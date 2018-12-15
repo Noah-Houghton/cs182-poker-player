@@ -28,10 +28,11 @@ def montecarlo_simulation(nb_player, hole_card, community_card):
 
 
 class MonteCarloBot(BasePokerPlayer):
+    
     def __init__(self):
         super(MonteCarloBot, self).__init__()
-        self.wins = 0
-        self.losses = 0
+        self.roundWins = 0
+        self.roundLosses = 0
 
     def declare_action(self, valid_actions, hole_card, round_state):
         # Estimate the win rate
@@ -85,8 +86,8 @@ class MonteCarloBot(BasePokerPlayer):
 
     def receive_round_result_message(self, winners, hand_info, round_state):
         is_winner = self.uuid in [item['uuid'] for item in winners]
-        self.wins += int(is_winner)
-        self.losses += int(not is_winner)
+        self.roundWins += int(is_winner)
+        self.roundLosses += int(not is_winner)
 
 def setup_ai():
     return MonteCarloBot()

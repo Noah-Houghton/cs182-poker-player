@@ -34,8 +34,8 @@ class SARSABot(BasePokerPlayer):
         self.epsilon = .1
         self.alpha = .3
         self.discount = 0
-        self.wins = 0
-        self.losses = 0
+        self.roundWins = 0
+        self.roundLosses = 0
         self.hand = None
         self.pot = 0
         self.cc = None
@@ -122,8 +122,8 @@ class SARSABot(BasePokerPlayer):
 
     def receive_round_result_message(self, winners, hand_info, round_state):
         is_winner = self.uuid in [item['uuid'] for item in winners]
-        self.wins += int(is_winner)
-        self.losses += int(not is_winner)
+        self.roundWins += int(is_winner)
+        self.roundLosses += int(not is_winner)
 
 def setup_ai():
     return SARSABot()

@@ -6,12 +6,24 @@ from pypokerengine.utils.game_state_utils import restore_game_state, attach_hole
 import importlib
 
 
+"""
+To use this bot against opponents who are not FishBot, change
+AGENTTYPE below.
+To change number of simulations the bot runs, change NB_SIMULATION
+below.
+"""
+AGENTTYPE = "FishBot"
 NB_SIMULATION = 1000
 DEBUG_MODE = False
 def log(msg):
     if DEBUG_MODE: print("[debug_info] --> %s" % msg)
 
 class EmulatorBot(BasePokerPlayer):
+
+    def __init__(self):
+        super(EmulatorBot, self).__init__()
+        self.roundWins = 0
+        self.roundLosses = 0
 
     def set_opponents_model(self, model_player):
         self.opponents_model = model_player
@@ -29,8 +41,7 @@ class EmulatorBot(BasePokerPlayer):
         for player_info in game_info['seats']:
             uuid = player_info['uuid']
             # naively assume we're playing against FishBot
-            agentType = "FishBot"
-            module = importlib.import_module('.'+agentType.lower(), package="bots")
+            module = importlib.import_module('.'+AGENTTYPE.lower(), package="bots")
             agent = module.setup_ai()
             self.set_opponents_model(agent)
             player_model = self.my_model if uuid == self.uuid else self.opponents_model
@@ -79,7 +90,9 @@ class EmulatorBot(BasePokerPlayer):
         pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
-        pass
+        is_winner = self.uuid in [item['uuid'] for item in winners]
+        self.roundWins += int(is_winner)
+        self.roundlosses += int(not is_winner)
 
 class OneActionModel(BasePokerPlayer):
 

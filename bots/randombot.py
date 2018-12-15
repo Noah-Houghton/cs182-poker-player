@@ -5,6 +5,9 @@ class RandomBot(BasePokerPlayer):
 
   def __init__(self):
     self.fold_ratio = self.call_ratio = raise_ratio = 1.0/3
+    super(RandomBot, self).__init__()
+    self.roundWins = 0
+    self.roundLosses = 0
 
   def set_action_ratio(self, fold_ratio, call_ratio, raise_ratio):
     ratio = [fold_ratio, call_ratio, raise_ratio]
@@ -42,7 +45,9 @@ class RandomBot(BasePokerPlayer):
     pass
 
   def receive_round_result_message(self, winners, hand_info, round_state):
-      pass
+      is_winner = self.uuid in [item['uuid'] for item in winners]
+      self.roundWins += int(is_winner)
+      self.roundLosses += int(not is_winner)
 
 def setup_ai():
     return RandomBot()

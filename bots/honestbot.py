@@ -7,6 +7,11 @@ NB_SIMULATION = 1000
 
 class HonestBot(BasePokerPlayer):
 
+    def __init__():
+        super(HonestBot, self).__init__()
+        self.roundWins = 0
+        self.roundLosses = 0
+
     def declare_action(self, valid_actions, hole_card, round_state):
         community_card = round_state['community_card']
         win_rate = estimate_hole_card_win_rate(
@@ -34,7 +39,9 @@ class HonestBot(BasePokerPlayer):
         pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
-        pass
+        is_winner = self.uuid in [item['uuid'] for item in winners]
+        self.roundWins += int(is_winner)
+        self.roundlosses += int(not is_winner)
 
 def setup_ai():
     return HonestBot()

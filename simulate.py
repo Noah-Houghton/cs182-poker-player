@@ -68,7 +68,7 @@ def main(argv):
 
 def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     stack_log = []
-    nVictories = 0
+    nMoneyVictories = 0
     if not numTraining == 0:
         print("Beginning {} training games".format(numTraining))
         trainingTime = time.time()
@@ -103,13 +103,14 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
         print("game {} complete".format(round+1))
         allStacks = [player['stack'] for player in game_result['players']]
         if max(allStacks) == stack_log[round][0]:
-            nVictories += 1
+            nMoneyVictories += 1
     gameTime = time.time() - gameTime
     if not numTraining == 0:
         print("training time: {} seconds".format(trainingTime))
     print("Average game time {} seconds".format(gameTime / float(numGames)))
     print("Avg. agent stack after {} games: {}".format(numGames, int(np.mean(stack_log))))
-    print("Agent won {} games out of {}".format(nVictories, numGames) +"({0:.0%})".format(nVictories/float(numGames)))
+    print("Agent had most money {} games out of {}".format(nMoneyVictories, numGames) +" ({0:.0%})".format(nMoneyVictories/float(numGames)))
+    print("Round win rate: {} out of {}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)+" ({0:.0%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses)))
     print("Finished simulating {} games with config:".format(numGames))
     print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
     print("Trained for {} games".format(numTraining))
