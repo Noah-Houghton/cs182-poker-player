@@ -91,6 +91,10 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     if not numTraining == 0:
         print("Training complete! Beginning {} games.".format(numGames))
         trainingTime = time.time() - trainingTime
+        for bot in bots:
+            # forget record from training games
+            bot.roundWins = 0
+            bot.roundLosses = 0
     gameTime = time.time()
     for round in range(numGames):
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
@@ -100,7 +104,14 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
         game_result = start_poker(config, verbose=0)
         # prints the average stack as the games advance
         stack_log.append([player['stack'] for player in game_result['players'] if player['uuid'] == agent.uuid])
-        print("game {} complete".format(round+1))
+        if round == numGames/4:
+            print("simulation 25% complete")
+        if round == numGames/2:
+            print("simulation 50% complete")
+        if round == numGames*3/4:
+            print("simulation 75% complete")
+        if round == numGames*9/10:
+            print("simulation 90% complete")
         allStacks = [player['stack'] for player in game_result['players']]
         if max(allStacks) == stack_log[round][0]:
             nMoneyVictories += 1
