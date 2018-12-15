@@ -7,7 +7,7 @@ NB_SIMULATION = 1000
 
 class HonestBot(BasePokerPlayer):
 
-    def __init__():
+    def __init__(self):
         super(HonestBot, self).__init__()
         self.roundWins = 0
         self.roundLosses = 0
