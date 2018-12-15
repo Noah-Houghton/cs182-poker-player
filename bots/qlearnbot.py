@@ -1,7 +1,6 @@
 from pypokerengine.engine.hand_evaluator import HandEvaluator
 from pypokerengine.players import BasePokerPlayer
 from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_card, gen_cards
-import numpy as np
 import time
 import random as rand
 import util
@@ -21,9 +20,9 @@ class QLearnBot(BasePokerPlayer):
         self.qvalues = util.Counter()
         self.epsilon = .1
         self.alpha = .3
-        self.discount = 0
+        self.discount = .01
         self.roundWins = 0
-        self.roundlosses = 0
+        self.roundLosses = 0
         self.hand = None
         self.pot = 0
         self.cc = None
