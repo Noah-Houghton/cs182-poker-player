@@ -36,7 +36,7 @@ Example command line to run with default config
 Example command line to run with custom config
 `python simulate.py -p MonteCarloBot -o RandomBot -n 3 -g 10 -a 5 -s 500 -r 15 -m 15`
 
-`python simulate.py -a <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -t <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind>`
+`simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining>`
 
 
 ## Coding an Agent
