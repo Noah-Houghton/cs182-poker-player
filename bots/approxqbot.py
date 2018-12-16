@@ -16,8 +16,6 @@ def adjusted_montecarlo_simulation(nb_player, hole_card, community_card):
     return my_score / max(opponents_score)
 
 
-# state = (handstrength, # of opposing players, player money, price-to-play)
-
 class ApproxQBot(BasePokerPlayer):
 
     def __init__(self):
@@ -27,7 +25,7 @@ class ApproxQBot(BasePokerPlayer):
         self.alpha = .3
         self.discount = 0
         self.roundWins = 0
-        self.roundlosses = 0
+        self.roundLosses = 0
         self.hand = None
         self.pot = 0
         self.cc = None
@@ -37,11 +35,12 @@ class ApproxQBot(BasePokerPlayer):
         feats = util.Counter()
 
         feats["hand-strength"] = state[0]
-        feats["num-players-in"] = state[1]
-        feats["player-money"] = state[2]
-        feats["price-to-play"] = state[3]
+        # feats["num-players-in"] = state[1]
+        # feats["player-money"] = state[2]
+        # feats["price-to-play"] = state[3]
+        # feats["pot-size"] = state[4]
 
-        features.divideAll(10.0)
+        feats.divideAll(10.0)
         return feats
 
     def getWeights(self):
@@ -55,12 +54,11 @@ class ApproxQBot(BasePokerPlayer):
         return sum
 
     def update(self, state, action, nextState, reward):
-        next_max_qval = self.computeValueFromQValues(nextState)
+        next_max_qval = self.computeValueFromQValues(nextState, )
         featureVector = self.getFeatures(state, action).iteritems()
         difference = reward + (self.discount * next_max_qval) - self.getQValue(state, action)
         for (feature, val) in featureVector:
           self.weights[feature] = self.weights[feature] + (self.alpha * difference * val)
-
 
     def computeValueFromQValues(self, state, actions):
         if len(actions) == 0:
@@ -75,14 +73,13 @@ class ApproxQBot(BasePokerPlayer):
         if len(actions) == 0:
             return None
         max = float("-inf")
-        maxAction = None
+        maxAction = {'action': 'fold', 'amount': 0}
         for action in actions:
             if self.getQValue(state, action["action"]) == max:
-                if util.flipCoin(.5):
-                    max = self.getQValue(state,action["action"])
-                    maxAction = action
-            elif self.getQValue(state,action["action"]) > max:
-                max = self.getQValue(state,action["action"])
+                max = self.getQValue(state, action["action"])
+                maxAction = action
+            elif self.getQValue(state, action["action"]) > max:
+                max = self.getQValue(state, action["action"])
                 maxAction = action
         return maxAction
 
@@ -127,7 +124,7 @@ class ApproxQBot(BasePokerPlayer):
     def receive_round_result_message(self, winners, hand_info, round_state):
         is_winner = self.uuid in [item['uuid'] for item in winners]
         self.roundWins += int(is_winner)
-        self.roundlosses += int(not is_winner)
+        self.roundLosses += int(not is_winner)
 
 def setup_ai():
     return ApproxQBot()

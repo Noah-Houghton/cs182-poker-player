@@ -1,5 +1,6 @@
 from pypokerengine.engine.hand_evaluator import HandEvaluator
 from pypokerengine.players import BasePokerPlayer
+from pypokerengine.engine.action_checker import ActionChecker
 from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_card, gen_cards
 import time
 import random as rand
@@ -27,6 +28,24 @@ class QLearnBot(BasePokerPlayer):
         self.pot = 0
         self.cc = None
         self.latestAction = None
+        self.seats = []
+
+    def getLegalActions(self, round_state):
+        street = round_state["street"]
+        moves = round_state["action_histories"][street]
+        min_raise = 0
+        for move in moves:
+            if move[amount] > min_raise:
+                min_raise = move[amount]
+        min_raise = max(round_state["small_blind_amount"], min_raise)
+        max_raise = self.seats[0]["stack"]
+        if max_raise < min_raise:
+            min_raise = max_raise = -1
+        return [
+            { "action" : "fold" , "amount" : 0 },
+            { "action" : "call" , "amount" : min_raise},
+            { "action" : "raise", "amount" : { "min": min_raise, "max": max_raise } }
+        ]
 
     def getQValue(self, state, action):
         return self.qvalues[(state,action)]
@@ -61,8 +80,8 @@ class QLearnBot(BasePokerPlayer):
         else:
             return self.computeActionFromQValues(state, actions)
 
-    def update(self, state, action, next_state, reward):
-        nextactionvalues = self.computeValueFromQValues(next_state, [action])
+    def update(self, state, action, next_state, reward, round_state):
+        nextactionvalues = self.computeValueFromQValues(next_state, self.getLegalActions(round_state))
         actionvalue = self.getQValue(state,action)
         self.qvalues[(state, action)] = (1-self.alpha) * actionvalue + self.alpha * (reward + self.discount * nextactionvalues)
 
@@ -87,12 +106,13 @@ class QLearnBot(BasePokerPlayer):
         self.hand = gen_cards(hole_card)
         self.cc = []
         self.pot = 0
+        self.seats = seats
 
     def receive_street_start_message(self, street, round_state):
         if street != 'preflop':
             self.update((HandEvaluator.eval_hand(self.hand, self.cc), self.pot), self.latestAction,
                 (HandEvaluator.eval_hand(self.hand, gen_cards(round_state['community_card'])), round_state['pot']['main']['amount']),
-                adjusted_montecarlo_simulation(self.num_players, self.hand, gen_cards(round_state['community_card'])) * round_state['pot']['main']['amount'])
+                adjusted_montecarlo_simulation(self.num_players, self.hand, gen_cards(round_state['community_card'])) * round_state['pot']['main']['amount'], round_state)
         self.pot = round_state['pot']['main']['amount']
         self.cc = gen_cards(round_state['community_card'])
 
