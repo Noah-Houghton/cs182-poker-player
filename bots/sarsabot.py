@@ -1,15 +1,3 @@
-# initialize arbitrarily
-
-# for each episode
-
-    # init S
-    # choose A from S using policy derived from Q
-    # Repeat for each step
-        # take action A, observe R, S'
-        # choose A' from S' using policy derived from Q
-        # Q(S,A) <- Q(S,A) + alpha[R + discountQ(S', A') - Q(S,A)]
-        # S <- S'; A <- A';
-    # until S is terminal
 from pypokerengine.utils.game_state_utils import restore_game_state, attach_hole_card_from_deck
 from pypokerengine.engine.hand_evaluator import HandEvaluator
 from pypokerengine.players import BasePokerPlayer
@@ -18,8 +6,9 @@ import random as rand
 import util
 from pypokerengine.api.emulator import Emulator
 
-def adjusted_montecarlo_simulation(nb_player, hole_card, community_card):
+def estimateVictoryChance(nb_player, hole_card, community_card):
     # Do a Monte Carlo simulation given the current state of the game by evaluating the hands
+    # instead of binary win/lose, give the chance that we're gonna win
     community_card = _fill_community_card(community_card, used_card=hole_card + community_card)
     unused_cards = _pick_unused_card((nb_player - 1) * 2, hole_card + community_card)
     opponents_hole = [unused_cards[2 * i:2 * i + 2] for i in range(nb_player - 1)]
@@ -33,12 +22,13 @@ class SARSABot(BasePokerPlayer):
         self.qvalues = util.Counter()
         self.epsilon = .1
         self.alpha = .3
-        self.discount = 0
+        self.discount = 1
         self.roundWins = 0
         self.roundLosses = 0
         self.hand = None
         self.pot = 0
         self.cc = None
+        self.currentMoney = 0
         self.latestAction = None
         self.latestState = None
 
@@ -93,9 +83,11 @@ class SARSABot(BasePokerPlayer):
             amount = rand.randrange(amount["min"], max(amount["min"], amount["max"]) + 1)
             choice["amount"] = amount
         if not self.latestState == None and not self.latestAction == None:
-            self.update(self.latestState, self.latestAction, (HandEvaluator.eval_hand(self.hand, self.cc), self.pot), choice,
+            # change currState to change statespace
+            currState = (HandEvaluator.eval_hand(self.hand, self.cc), self.pot, self.currentMoney)
+            self.update(self.latestState, self.latestAction, currState, choice,
                 # (HandEvaluator.eval_hand(self.hand, gen_cards(round_state['community_card'])), round_state['pot']['main']['amount']),
-                adjusted_montecarlo_simulation(self.num_players, self.hand, self.cc) * self.pot, round_state)
+                estimateVictoryChance(self.num_players, self.hand, self.cc) * self.pot, round_state)
         self.latestAction = choice
         self.latestState = (HandEvaluator.eval_hand(self.hand, self.cc), self.pot)
         return action, amount
@@ -110,10 +102,9 @@ class SARSABot(BasePokerPlayer):
         self.hand = gen_cards(hole_card)
         self.cc = []
         self.pot = 0
+        self.currentMoney = [s["stack"] for s in seats if s["uuid"] == self.uuid][0]
 
     def receive_street_start_message(self, street, round_state):
-        # if street != 'preflop':
-
         self.pot = round_state['pot']['main']['amount']
         self.cc = gen_cards(round_state['community_card'])
 
