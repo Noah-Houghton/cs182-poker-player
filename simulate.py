@@ -76,7 +76,8 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
         # run numTraining training games
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
         CONFIG = config
-        for i in range(numAgents):
+        # + 1 for our agent
+        for i in range(numAgents+1):
             config.register_player(name=("Player {}".format(i+1)), algorithm=bots[i])
         config.set_blind_structure(conf["b"])
         start_poker(config, verbose=0)
@@ -98,7 +99,7 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     gameTime = time.time()
     for round in range(numGames):
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
-        for i in range(numAgents):
+        for i in range(len(bots)):
             config.register_player(name=("Player {}".format(i+1)), algorithm=bots[i])
         config.set_blind_structure(conf["b"])
         game_result = start_poker(config, verbose=0)

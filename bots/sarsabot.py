@@ -20,8 +20,8 @@ class SARSABot(BasePokerPlayer):
     def __init__(self):
         super(SARSABot, self).__init__()
         self.qvalues = util.Counter()
-        self.epsilon = .1
-        self.alpha = .3
+        self.epsilon = .05
+        self.alpha = 0.1
         self.discount = 1
         self.roundWins = 0
         self.roundLosses = 0
@@ -31,6 +31,7 @@ class SARSABot(BasePokerPlayer):
         self.currentMoney = 0
         self.latestAction = None
         self.latestState = None
+        self.latestReward = 0
 
     def getQValue(self, state, action):
         return self.qvalues[(state,action)]
@@ -85,11 +86,11 @@ class SARSABot(BasePokerPlayer):
         if not self.latestState == None and not self.latestAction == None:
             # change currState to change statespace
             currState = (HandEvaluator.eval_hand(self.hand, self.cc), self.pot, self.currentMoney)
-            self.update(self.latestState, self.latestAction, currState, choice,
-                # (HandEvaluator.eval_hand(self.hand, gen_cards(round_state['community_card'])), round_state['pot']['main']['amount']),
-                estimateVictoryChance(self.num_players, self.hand, self.cc) * self.pot, round_state)
+            # self.pot should be the last pot, not the most recent one?
+            self.update(self.latestState, self.latestAction, currState, choice, self.latestReward, round_state)
         self.latestAction = choice
         self.latestState = (HandEvaluator.eval_hand(self.hand, self.cc), self.pot)
+        self.latestReward = estimateVictoryChance(self.num_players, self.hand, self.cc) * self.pot
         return action, amount
 
     def receive_game_start_message(self, game_info):
@@ -101,12 +102,17 @@ class SARSABot(BasePokerPlayer):
     def receive_round_start_message(self, round_count, hole_card, seats):
         self.hand = gen_cards(hole_card)
         self.cc = []
+        # maybe need to reset vals here?
         self.pot = 0
-        self.currentMoney = [s["stack"] for s in seats if s["uuid"] == self.uuid][0]
+        self.currentMoney = 0
+        self.latestAction = None
+        self.latestState = None
+        self.latestReward = 0
 
     def receive_street_start_message(self, street, round_state):
         self.pot = round_state['pot']['main']['amount']
         self.cc = gen_cards(round_state['community_card'])
+        self.currentMoney = [s["stack"] for s in round_state["seats"] if s["uuid"] == self.uuid][0]
 
     def receive_game_update_message(self, action, round_state):
         pass
@@ -115,6 +121,11 @@ class SARSABot(BasePokerPlayer):
         is_winner = self.uuid in [item['uuid'] for item in winners]
         self.roundWins += int(is_winner)
         self.roundLosses += int(not is_winner)
+        agentWon = [winner["stack"] for winner in winners if winner["uuid"] == self.uuid]
+        if len(agentWon) == 0:
+            self.latestReward = 0
+        else:
+            self.latestReward = agentWon[0]
 
 def setup_ai():
     return SARSABot()
