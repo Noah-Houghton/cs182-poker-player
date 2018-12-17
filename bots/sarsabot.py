@@ -21,7 +21,7 @@ class SARSABot(BasePokerPlayer):
         super(SARSABot, self).__init__()
         self.qvalues = util.Counter()
         self.epsilon = .05
-        self.alpha = 0.1
+        self.alpha = 0.5
         self.discount = 1
         self.roundWins = 0
         self.roundLosses = 0
@@ -29,9 +29,12 @@ class SARSABot(BasePokerPlayer):
         self.pot = 0
         self.cc = None
         self.currentMoney = 0
-        self.latestAction = None
-        self.latestState = None
-        self.latestReward = 0
+        self.prevAction = None
+        self.prevState = None
+        # self.latestReward = 0
+        self.currAction = None
+        self.currState = None
+        self.currentInvestment = 0
 
     def getQValue(self, state, action):
         return self.qvalues[(state,action)]
@@ -76,21 +79,26 @@ class SARSABot(BasePokerPlayer):
         community_card = gen_cards(round_state["community_card"])
         hole_card = gen_cards(hole_card)
         handStrength = HandEvaluator.eval_hand(hole_card, community_card)
-        choice = self.getAction((handStrength, round_state["pot"]["main"]["amount"]), valid_actions)
+        self.prevAction = self.currAction
+        self.prevState = self.currState
+        # self.prevState = (HandEvaluator.eval_hand(self.hand, self.cc), self.pot)
+        self.currState = (handStrength, round_state["pot"]["main"]["amount"], [s["stack"] for s in round_state["seats"] if s["uuid"] == self.uuid][0])
+        choice = self.getAction(self.currState, valid_actions)
         action = choice["action"]
         amount = choice["amount"]
         if action == 'raise':
             # naively choose a random raise amt between min and max
             amount = rand.randrange(amount["min"], max(amount["min"], amount["max"]) + 1)
             choice["amount"] = amount
-        if not self.latestState == None and not self.latestAction == None:
+        self.currAction = choice
+        self.currentInvestment += amount
+        # this happens only if the game ends after one action -- limiation of SARSA
+        if not self.prevState == None and not self.prevAction == None:
             # change currState to change statespace
-            currState = (HandEvaluator.eval_hand(self.hand, self.cc), self.pot, self.currentMoney)
+            # currState = (HandEvaluator.eval_hand(self.hand, self.cc), self.pot, self.currentMoney)
             # self.pot should be the last pot, not the most recent one?
-            self.update(self.latestState, self.latestAction, currState, choice, self.latestReward, round_state)
-        self.latestAction = choice
-        self.latestState = (HandEvaluator.eval_hand(self.hand, self.cc), self.pot)
-        self.latestReward = estimateVictoryChance(self.num_players, self.hand, self.cc) * self.pot
+            reward = self.computeValueFromQValues(self.prevState, self.prevAction)
+            self.update(self.prevState, self.prevAction, self.currState, self.currAction, reward, round_state)
         return action, amount
 
     def receive_game_start_message(self, game_info):
@@ -105,9 +113,12 @@ class SARSABot(BasePokerPlayer):
         # maybe need to reset vals here?
         self.pot = 0
         self.currentMoney = 0
-        self.latestAction = None
-        self.latestState = None
-        self.latestReward = 0
+        self.prevAction = None
+        self.prevState = None
+        # self.latestReward = 0
+        self.currState = None
+        self.currState = None
+        self.currentInvestment = 0
 
     def receive_street_start_message(self, street, round_state):
         self.pot = round_state['pot']['main']['amount']
@@ -122,10 +133,25 @@ class SARSABot(BasePokerPlayer):
         self.roundWins += int(is_winner)
         self.roundLosses += int(not is_winner)
         agentWon = [winner["stack"] for winner in winners if winner["uuid"] == self.uuid]
-        if len(agentWon) == 0:
-            self.latestReward = 0
+        reward = 0
+        if is_winner:
+            # get amount of money the agent gained by winning this round (?)
+            reward = agentWon[0] - self.currentMoney
+            # print("Agent won {}".format(reward))
         else:
-            self.latestReward = agentWon[0]
+            # print("Agent lost")
+            reward = -1 * self.currentInvestment
+        # if len(agentWon) == 0:
+        #     self.latestReward = 0
+        # else:
+        #     self.latestReward = agentWon[0]
+        # this occurs when the round ends after >1 action
+        if not self.prevState == None and not self.prevAction == None:
+            # print(reward)
+            # print(self.prevState)
+            # print(self.prevAction)
+            self.update(self.prevState, self.prevAction, self.currState, self.currAction, reward, round_state)
+
 
 def setup_ai():
     return SARSABot()
