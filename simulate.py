@@ -90,13 +90,14 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
         if round == numTraining*9/10:
             print("90% trained")
     if not numTraining == 0:
-        print("Training complete! Beginning {} games.".format(numGames))
+        print("Training complete!")
         trainingTime = time.time() - trainingTime
         for bot in bots:
             # forget record from training games
             bot.roundWins = 0
             bot.roundLosses = 0
     gameTime = time.time()
+    print("Beginning {} games.".format(numGames))
     for round in range(numGames):
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
         for i in range(len(bots)):
