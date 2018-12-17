@@ -23,7 +23,7 @@ def main(argv):
     numTraining = 0
     numAgents = 1
     numGames = 1
-    
+
     helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog>'
     try:
         opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:w", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining=", "writeToLog="])
@@ -127,12 +127,16 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
         print("training time: {} seconds".format(trainingTime))
     # print(bots[0].qvalues)
     print("Average game time {} seconds".format(gameTime / float(numGames)))
-    print("Avg. agent stack after {} games: {}".format(numGames, int(np.mean(stack_log))))
+    print("Avg. agent stack after {} games: {} vs start @ {}".format(numGames, int(np.mean(stack_log)), conf["s"]))
     print("Agent had most money {} games out of {}".format(nMoneyVictories, numGames) +" ({0:.0%})".format(nMoneyVictories/float(numGames)))
     print("Round win rate: {} out of {}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)+" ({0:.0%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses)))
     print("Finished simulating {} games with config:".format(numGames))
     print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
     print("Trained for {} games".format(numTraining))
+    try:
+        print("agent qvals {}".format(agent.qvalues))
+    except:
+        pass
     if log:
         # UPDATE THESE VALUES TO INCLUDE IN EXPORT
         try:
@@ -147,7 +151,7 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
         if randomMMV is None or randomRVR is None or alph is None or eps is None or gamma is None:
             data = "{}".format(conf["agentType"])
             data += " & {0:.3f}".format(gameTime / float(numGames))
-            data += " & {} & {}/{}".format(int(np.mean(stack_log)), nMoneyVictories, numGames)
+            data += " & {} vs {} @start & {}/{}".format(int(np.mean(stack_log)),conf["s"], nMoneyVictories, numGames)
             data += " ({0:.2%})".format(nMoneyVictories/float(numGames))
             data += " & {}/{}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)
             data += " ({0:.2%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses))
