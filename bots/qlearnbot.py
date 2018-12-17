@@ -2,6 +2,7 @@ from pypokerengine.engine.hand_evaluator import HandEvaluator
 from pypokerengine.players import BasePokerPlayer
 from pypokerengine.engine.action_checker import ActionChecker
 from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_card, gen_cards
+from pypokerengine.utils.game_state_utils import _restore_table
 import time
 import random as rand
 import util
@@ -32,22 +33,10 @@ class QLearnBot(BasePokerPlayer):
         self.latestBet = 0
 
     def getLegalActions(self, round_state):
-        street = round_state["street"]
-        min_raise = 0
-        if street in round_state["action_histories"].keys():
-            moves = round_state["action_histories"][street]
-            for move in moves:
-                if move[amount] > min_raise:
-                    min_raise = move[amount]
-        min_raise = max(round_state["small_blind_amount"], min_raise) # min raise - last bet
-        max_raise = self.seats[0]["stack"]
-        if max_raise < min_raise:
-            min_raise = max_raise = -1
-        return [
-            { "action" : "fold" , "amount" : 0 },
-            { "action" : "call" , "amount" : (min_raise - self.latestBet)},
-            { "action" : "raise", "amount" : { "min": (min_raise + 1), "max": max_raise } }
-        ]
+        table = _restore_table(round_state)
+        players = table.seats.players
+        return ActionChecker.legal_actions(players, 0, round_state["small_blind_amount"])
+
 
     def getQValue(self, state, action):
         return self.qvalues[(state,action)]
