@@ -120,6 +120,7 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     gameTime = time.time() - gameTime
     if not numTraining == 0:
         print("training time: {} seconds".format(trainingTime))
+    # print(bots[0].qvalues)
     print("Average game time {} seconds".format(gameTime / float(numGames)))
     print("Avg. agent stack after {} games: {}".format(numGames, int(np.mean(stack_log))))
     print("Agent had most money {} games out of {}".format(nMoneyVictories, numGames) +" ({0:.0%})".format(nMoneyVictories/float(numGames)))
@@ -127,6 +128,40 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     print("Finished simulating {} games with config:".format(numGames))
     print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
     print("Trained for {} games".format(numTraining))
+    # UPDATE THESE VALUES TO INCLUDE IN EXPORT
+    try:
+        alph = agent.alpha
+        eps = agent.epsilon
+        gamma = agent.discount
+    except:
+        alph = eps = gamma = None
+    randomMMV = 1
+    randomRVR = 1
+    # CALCULATE RELATIONSHIPS
+    if randomMMV is None or randomRVR is None or alph is None or eps is None or gamma is None:
+        data = "{}".format(conf["agentType"])
+        data += " & {0:.3f}".format(gameTime / float(numGames))
+        data += " & {} & {}/{}".format(int(np.mean(stack_log)), nMoneyVictories, numGames)
+        data += " ({0:.2%})".format(nMoneyVictories/float(numGames))
+        data += " & {}/{}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)
+        data += " ({0:.2%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses))
+        data += " & - & - & - & -"
+    else:
+        MMVR = (nMoneyVictories/float(numGames)) / float(randomMMV)
+        RVR = (bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses)) / float(randomRVR)
+        data = "{}".format(conf["agentType"])
+        data += " & {0:.3f}".format(gameTime / float(numGames))
+        data += " & {} & {}/{}".format(int(np.mean(stack_log)), nMoneyVictories, numGames)
+        data += " ({0:.2%})".format(nMoneyVictories/float(numGames))
+        data += " & {}/{}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)
+        data += " ({0:.2%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses))
+        data += " & {0:.2%} & {0:.2%}".format(MMVR, RVR)
+        data += " & {} & $\\alpha={}$ $\\gamma={}$ $\\epsilon={}$".format(numTraining, alph, gamma, eps)
+    data += "\\\\\\hline"
+    data = data.replace("%", "\\%")
+    with open("{}.txt".format(conf["agentType"]), "w+") as output:
+        output.write(data)
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
