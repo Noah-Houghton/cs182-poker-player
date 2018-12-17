@@ -18,7 +18,7 @@ def main(argv):
     b = {}
     s = 100
     r = 10
-    sb = 10
+    sb = 4
     log = False
     numTraining = 0
     numAgents = 1

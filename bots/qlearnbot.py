@@ -22,7 +22,7 @@ class QLearnBot(BasePokerPlayer):
         super(QLearnBot, self).__init__()
         self.qvalues = util.Counter()
         self.epsilon = .15
-        self.alpha = .5
+        self.alpha = .6
         self.discount = 1
         self.roundWins = 0
         self.roundLosses = 0
@@ -36,10 +36,10 @@ class QLearnBot(BasePokerPlayer):
         self.haveActed = False
         self.currentMoney = 0
         self.currentInvestment = 0
-        self.moves_made = 0
 
     def getState(self, strength):
-        return int(math.log(strength, 2))
+        return int(math.log(strength, 1.5))
+        # return strength 
 
     def getLegalActions(self, round_state):
         table = _restore_table(round_state)
@@ -75,6 +75,8 @@ class QLearnBot(BasePokerPlayer):
         return maxAction
 
     def getAction(self, state, actions):
+        if actions == []:
+            print None
         if util.flipCoin(self.epsilon):
             return rand.choice(actions)
         else:
@@ -93,7 +95,7 @@ class QLearnBot(BasePokerPlayer):
         cur_state = self.getState(HandEvaluator.eval_hand(self.hand, self.curCC))
         new_state = self.getState(HandEvaluator.eval_hand(self.hand, newCC))
         if self.haveActed:
-            self.update(cur_state, self.latestAction, new_state, 10, round_state)
+            self.update(cur_state, self.latestAction, new_state, 5, round_state)
         self.curCC = newCC
         choice = self.getAction(new_state, valid_actions)
         action = choice["action"]
@@ -105,7 +107,7 @@ class QLearnBot(BasePokerPlayer):
         self.latestBet = amount
         self.currentInvestment += self.latestBet
         self.haveActed = True
-        self.moves_made += 1
+        self.played_in_round = True
         return action, amount
 
     def receive_game_start_message(self, game_info):
@@ -118,6 +120,8 @@ class QLearnBot(BasePokerPlayer):
         self.pot = 0
         self.seats = seats
         self.haveActed = False
+        self.latestAction = None
+        self.latestBet = 0
 
     def receive_street_start_message(self, street, round_state):
         self.pot = round_state['pot']['main']['amount']
@@ -128,6 +132,7 @@ class QLearnBot(BasePokerPlayer):
         pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
+
         is_winner = self.uuid in [item['uuid'] for item in winners]
         self.roundWins += int(is_winner)
         self.roundLosses += int(not is_winner)
@@ -135,13 +140,13 @@ class QLearnBot(BasePokerPlayer):
         reward = 0
         if is_winner:
             reward = (agentWon[0] - self.currentMoney)
-        else:
-            reward = (-1 * self.currentInvestment)/10.0
+            reward = math.log(reward) * 5
+        elif self.currentInvestment > 0:
+            reward = math.log(self.currentInvestment) * -1.0
         cur_state = self.getState(HandEvaluator.eval_hand(self.hand, self.curCC))
-        self.update(cur_state, self.latestAction, None, reward, round_state)
-
-
-
+        if self.haveActed:
+            self.update(cur_state, self.latestAction, None, reward, round_state)
+ 
 
 def setup_ai():
     return QLearnBot()

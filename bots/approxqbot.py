@@ -40,21 +40,24 @@ class ApproxQBot(BasePokerPlayer):
     def getFeatures(self, state, action):
         feats = util.Counter()
 
-
         feats["hand-strength"] = math.log(state[0])
+
+        histories = state[1]["action_histories"]
+        raises = 0
+        for history in histories:
+            for act in histories[history]:
+                if act["uuid"] != self.uuid:
+                    if act["action"] == "RAISE" :
+                        raises += 1
+        feats["opp-confidence"] = float(raises)/10.0
+
+        # feats["relative-cost-to-play"] = 0
+        # if action["amount"] > 0 and self.currentMoney > 0:
+        #     feats["relative-cost-to-play"] = float(action["amount"])/(self.currentMoney)
 
         # some feature that makes reference to which action you're taking... maybe new pot size?
 
-        # feats["relative-cost-to-play"] = -([action]["amount"])/(self.currentMoney)
-        # use ActionChecker.something to get this...
-        # might help avoid bust
 
-        # table = _restore_table(state[1])
-        # players = table.seats.players
-        # all_histories = [p.action_histories for p in players]
-        # all_histories = reduce(lambda acc, e: acc + e, all_histories)  # flatten
-        # raise_histories = [h for h in all_histories if h["action"] in ["RAISE", "SMALLBLIND", "BIGBLIND"]]
-        # feats["opp-confidence"] = (len(raise_histories))/(len(players) - 1)
 
         feats.divideAll(10.0)
         return feats
@@ -63,6 +66,10 @@ class ApproxQBot(BasePokerPlayer):
         return self.weights
 
     def getQValue(self, state, action):
+        # if action["action"] == 'raise' and isinstance(action["amount"], dict):
+        #     min_val = action["amount"]["min"]
+        #     max_val = action["amount"]["max"]
+        #     action["amount"] = (max_val + 1 - min_val)/2
         featureVector = self.getFeatures(state, action)
         sum = 0
         for feature in featureVector:
@@ -73,6 +80,10 @@ class ApproxQBot(BasePokerPlayer):
         next_max_qval = 0
         if nextState != None:
             next_max_qval = self.computeValueFromQValues(nextState, self.getLegalActions(state[1]))
+        # if action["action"] == 'raise' and isinstance(action["amount"], dict):
+        #     min_val = action["amount"]["min"]
+        #     max_val = action["amount"]["max"]
+        #     action["amount"] = (max_val + 1 - min_val)/2
         featureVector = self.getFeatures(state, action).iteritems()
         difference = reward + (self.discount * next_max_qval) - self.getQValue(state, action)
         for (feature, val) in featureVector:
@@ -81,23 +92,23 @@ class ApproxQBot(BasePokerPlayer):
     def computeValueFromQValues(self, state, actions):
         if len(actions) == 0:
             return 0.0
-        max = float("-inf")
+        max_val = float("-inf")
         for action in actions:
-            if self.getQValue(state, action["action"]) > max:
-                max = self.getQValue(state,action["action"])
-        return max
+            if self.getQValue(state, action) > max_val:
+                max_val = self.getQValue(state,action)
+        return max_val
 
     def computeActionFromQValues(self, state, actions):
         if len(actions) == 0:
             return None
-        max = float("-inf")
+        max_val = float("-inf")
         maxAction = {'action': 'fold', 'amount': 0}
         for action in actions:
-            if self.getQValue(state, action["action"]) == max:
-                max = self.getQValue(state, action["action"])
+            if self.getQValue(state, action) == max_val:
+                max_val = self.getQValue(state, action)
                 maxAction = action
-            elif self.getQValue(state, action["action"]) > max:
-                max = self.getQValue(state, action["action"])
+            elif self.getQValue(state, action) > max_val:
+                max_val = self.getQValue(state, action)
                 maxAction = action
         return maxAction
 
@@ -112,14 +123,16 @@ class ApproxQBot(BasePokerPlayer):
         cur_strength = HandEvaluator.eval_hand(self.hand, self.curCC)
         new_strength = HandEvaluator.eval_hand(self.hand, newCC)
         if self.haveActed:
-            self.update((cur_strength, self.last_round_state), self.latestAction, (new_strength, round_state), 10)
+            self.update((cur_strength, self.last_round_state), self.latestAction, (new_strength, round_state), 0)
         choice = self.getAction((new_strength, round_state), valid_actions)
         action = choice["action"]
         amount = choice["amount"]
-        if action == 'raise':
-            # naively choose a random raise amt between min and max
-            amount = rand.randrange(amount["min"], max(amount["min"], amount["max"]) + 1)
-        self.latestAction = action
+        if isinstance(amount, dict):
+            min_val = amount["min"]
+            max_val = amount["max"]
+            # amount = choice["amount"] = (max_val + 1 - min_val)/2
+            amount = choice["amount"] = rand.randrange(min_val, max_val + 1)
+        self.latestAction = choice
         self.latestBet = amount
         self.currentInvestment += self.latestBet
         self.last_round_state = round_state
@@ -137,6 +150,8 @@ class ApproxQBot(BasePokerPlayer):
         self.pot = 0
         self.seats = seats
         self.haveActed = False
+        self.latestAction = None
+        self.latestBet = 0
 
     def receive_street_start_message(self, street, round_state):            
         self.pot = round_state['pot']['main']['amount']
@@ -152,10 +167,11 @@ class ApproxQBot(BasePokerPlayer):
         reward = 0
         agentWon = [winner["stack"] for winner in winners if winner["uuid"] == self.uuid]
         if is_winner:
-            reward = (agentWon[0] - self.currentMoney)
-        else:
-            reward = (-1 * self.currentInvestment)/10.0
-        self.update((HandEvaluator.eval_hand(self.hand, self.curCC), round_state), self.latestAction, None, reward)
+            reward = math.log(agentWon[0] - self.currentMoney) * 5.0
+        elif self.currentInvestment > 0:
+            reward = -1 * math.log(self.currentInvestment)
+        if self.haveActed:
+            self.update((HandEvaluator.eval_hand(self.hand, self.curCC), round_state), self.latestAction, None, reward)
 
 def setup_ai():
     return ApproxQBot()
