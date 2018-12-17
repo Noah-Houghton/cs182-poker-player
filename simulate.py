@@ -12,9 +12,6 @@ Example command line to run with custom config
 python simulate.py -p MonteCarloBot -o RandomBot -n 3 -g 10 -a 5 -s 500 -r 15 -m 15
 """
 
-LOG_TEST = True
-
-
 def main(argv):
     # defaults for config
     a = 0
@@ -22,10 +19,11 @@ def main(argv):
     s = 100
     r = 10
     sb = 10
+    log = False
     numTraining = 0
-    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining>'
+    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog>'
     try:
-        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining="])
+        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:w", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining=", "writeToLog="])
     except getopt.GetoptError:
         print(helpMessage)
         sys.exit(2)
@@ -53,6 +51,8 @@ def main(argv):
             sb = int(arg)
         elif opt in ('-t', "--numTraining"):
             numTraining = int(arg)
+        elif opt in ('-w', "--writeToLog"):
+            log = True
 
     bots = []
     module = importlib.import_module('.'+agentType.lower(), package="bots")
@@ -66,9 +66,9 @@ def main(argv):
         # class_ = getattr(module, opponentType)
         bots.append(opponent)
     config = {"r":r, "a":a, "b":b, "s":s, "r":r, "sb":sb, "agentType":agentType, "opponentType":opponentType}
-    runGames(bots, numAgents, numGames, agent, config, numTraining)
+    runGames(bots, numAgents, numGames, agent, config, numTraining, log)
 
-def runGames(bots, numAgents, numGames, agent, conf, numTraining):
+def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
     stack_log = []
     nMoneyVictories = 0
     if not numTraining == 0:
@@ -130,7 +130,7 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     print("Finished simulating {} games with config:".format(numGames))
     print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
     print("Trained for {} games".format(numTraining))
-    if LOG_TEST:
+    if log:
         # UPDATE THESE VALUES TO INCLUDE IN EXPORT
         try:
             alph = agent.alpha
