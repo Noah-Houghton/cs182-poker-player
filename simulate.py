@@ -18,7 +18,7 @@ def main(argv):
     b = {}
     s = 100
     r = 10
-    sb = 10
+    sb = 4
     log = False
     numTraining = 0
     helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog>'
