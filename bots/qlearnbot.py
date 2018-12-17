@@ -37,8 +37,8 @@ class QLearnBot(BasePokerPlayer):
         if street in round_state["action_histories"].keys():
             moves = round_state["action_histories"][street]
             for move in moves:
-                if move[amount] > min_raise:
-                    min_raise = move[amount]
+                if move["amount"] > min_raise:
+                    min_raise = move["amount"]
         min_raise = max(round_state["small_blind_amount"], min_raise) # min raise - last bet
         max_raise = self.seats[0]["stack"]
         if max_raise < min_raise:
@@ -116,7 +116,7 @@ class QLearnBot(BasePokerPlayer):
 
     def receive_street_start_message(self, street, round_state):
         if street != 'preflop':
-            self.update((HandEvaluator.eval_hand(self.hand, self.cc), self.pot), self.latestAction,
+            self.update((HandEvaluator.eval_hand(self.hand, self.cc)), self.latestAction,
                 (HandEvaluator.eval_hand(self.hand, gen_cards(round_state['community_card'])), round_state['pot']['main']['amount']),
                 0, round_state)
         self.pot = round_state['pot']['main']['amount']
@@ -133,7 +133,7 @@ class QLearnBot(BasePokerPlayer):
         reward = 0
         if len(agentWon) != 0:
             reward = agentWon[0]
-        self.update((HandEvaluator.eval_hand(self.hand, self.cc), self.pot), self.latestAction, None, reward, round_state)
+        self.update((HandEvaluator.eval_hand(self.hand, self.cc)), self.latestAction, None, reward, round_state)
 
 
 def setup_ai():
