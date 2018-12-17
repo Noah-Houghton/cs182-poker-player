@@ -20,8 +20,8 @@ class QLearnBot(BasePokerPlayer):
         super(QLearnBot, self).__init__()
         self.qvalues = util.Counter()
         self.epsilon = .1
-        self.alpha = .3
-        self.discount = .9
+        self.alpha = .5
+        self.discount = 1
         self.roundWins = 0
         self.roundLosses = 0
         self.hand = None
@@ -29,22 +29,24 @@ class QLearnBot(BasePokerPlayer):
         self.cc = None
         self.latestAction = None
         self.seats = []
+        self.latestBet = 0
 
     def getLegalActions(self, round_state):
         street = round_state["street"]
-        moves = round_state["action_histories"][street]
         min_raise = 0
-        for move in moves:
-            if move[amount] > min_raise:
-                min_raise = move[amount]
-        min_raise = max(round_state["small_blind_amount"], min_raise)
+        if street in round_state["action_histories"].keys():
+            moves = round_state["action_histories"][street]
+            for move in moves:
+                if move[amount] > min_raise:
+                    min_raise = move[amount]
+        min_raise = max(round_state["small_blind_amount"], min_raise) # min raise - last bet
         max_raise = self.seats[0]["stack"]
         if max_raise < min_raise:
             min_raise = max_raise = -1
         return [
             { "action" : "fold" , "amount" : 0 },
-            { "action" : "call" , "amount" : min_raise},
-            { "action" : "raise", "amount" : { "min": min_raise, "max": max_raise } }
+            { "action" : "call" , "amount" : (min_raise - self.latestBet)},
+            { "action" : "raise", "amount" : { "min": (min_raise + 1), "max": max_raise } }
         ]
 
     def getQValue(self, state, action):
@@ -55,8 +57,8 @@ class QLearnBot(BasePokerPlayer):
             return 0.0
         max = float("-inf")
         for action in actions:
-            if self.getQValue(state, action) > max:
-                max = self.getQValue(state,action)
+            if self.getQValue(state, action["action"]) > max:
+                max = self.getQValue(state,action["action"])
         return max
 
     def computeActionFromQValues(self, state, actions):
@@ -65,12 +67,13 @@ class QLearnBot(BasePokerPlayer):
         max = float("-inf")
         maxAction = None
         for action in actions:
-            if self.getQValue(state, action["action"]) == max:
+            qval = self.getQValue(state, action["action"])
+            if qval == max:
                 if util.flipCoin(.5):
-                    max = self.getQValue(state,action["action"])
+                    max = qval
                     maxAction = action
-            elif self.getQValue(state,action["action"]) > max:
-                max = self.getQValue(state,action["action"])
+            elif qval > max:
+                max = qval
                 maxAction = action
         return maxAction
 
@@ -81,7 +84,9 @@ class QLearnBot(BasePokerPlayer):
             return self.computeActionFromQValues(state, actions)
 
     def update(self, state, action, next_state, reward, round_state):
-        nextactionvalues = self.computeValueFromQValues(next_state, self.getLegalActions(round_state))
+        nextactionvalues = 0
+        if next_state != None:
+            nextactionvalues = self.computeValueFromQValues(next_state, self.getLegalActions(round_state))
         actionvalue = self.getQValue(state,action)
         self.qvalues[(state, action)] = (1-self.alpha) * actionvalue + self.alpha * (reward + self.discount * nextactionvalues)
 
@@ -97,6 +102,7 @@ class QLearnBot(BasePokerPlayer):
             # naively choose a random raise amt between min and max
             amount = rand.randrange(amount["min"], max(amount["min"], amount["max"]) + 1)
         self.latestAction = action
+        self.latestBet = amount
         return action, amount
 
     def receive_game_start_message(self, game_info):
@@ -112,7 +118,7 @@ class QLearnBot(BasePokerPlayer):
         if street != 'preflop':
             self.update((HandEvaluator.eval_hand(self.hand, self.cc), self.pot), self.latestAction,
                 (HandEvaluator.eval_hand(self.hand, gen_cards(round_state['community_card'])), round_state['pot']['main']['amount']),
-                adjusted_montecarlo_simulation(self.num_players, self.hand, gen_cards(round_state['community_card'])) * round_state['pot']['main']['amount'], round_state)
+                0, round_state)
         self.pot = round_state['pot']['main']['amount']
         self.cc = gen_cards(round_state['community_card'])
 
@@ -123,6 +129,12 @@ class QLearnBot(BasePokerPlayer):
         is_winner = self.uuid in [item['uuid'] for item in winners]
         self.roundWins += int(is_winner)
         self.roundLosses += int(not is_winner)
+        agentWon = [winner["stack"] for winner in winners if winner["uuid"] == self.uuid]
+        reward = 0
+        if len(agentWon) != 0:
+            reward = agentWon[0]
+        self.update((HandEvaluator.eval_hand(self.hand, self.cc), self.pot), self.latestAction, None, reward, round_state)
+
 
 def setup_ai():
     return QLearnBot()
