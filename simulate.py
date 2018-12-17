@@ -12,7 +12,6 @@ Example command line to run with custom config
 python simulate.py -p MonteCarloBot -o RandomBot -n 3 -g 10 -a 5 -s 500 -r 15 -m 15
 """
 
-
 def main(argv):
     # defaults for config
     a = 0
@@ -20,10 +19,11 @@ def main(argv):
     s = 100
     r = 10
     sb = 10
+    log = False
     numTraining = 0
-    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining>'
+    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog>'
     try:
-        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining="])
+        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:w", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining=", "writeToLog="])
     except getopt.GetoptError:
         print(helpMessage)
         sys.exit(2)
@@ -51,6 +51,8 @@ def main(argv):
             sb = int(arg)
         elif opt in ('-t', "--numTraining"):
             numTraining = int(arg)
+        elif opt in ('-w', "--writeToLog"):
+            log = True
 
     bots = []
     module = importlib.import_module('.'+agentType.lower(), package="bots")
@@ -64,9 +66,9 @@ def main(argv):
         # class_ = getattr(module, opponentType)
         bots.append(opponent)
     config = {"r":r, "a":a, "b":b, "s":s, "r":r, "sb":sb, "agentType":agentType, "opponentType":opponentType}
-    runGames(bots, numAgents, numGames, agent, config, numTraining)
+    runGames(bots, numAgents, numGames, agent, config, numTraining, log)
 
-def runGames(bots, numAgents, numGames, agent, conf, numTraining):
+def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
     stack_log = []
     nMoneyVictories = 0
     if not numTraining == 0:
@@ -120,6 +122,7 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     gameTime = time.time() - gameTime
     if not numTraining == 0:
         print("training time: {} seconds".format(trainingTime))
+    # print(bots[0].qvalues)
     print("Average game time {} seconds".format(gameTime / float(numGames)))
     print("Avg. agent stack after {} games: {}".format(numGames, int(np.mean(stack_log))))
     print("Agent had most money {} games out of {}".format(nMoneyVictories, numGames) +" ({0:.0%})".format(nMoneyVictories/float(numGames)))
@@ -127,6 +130,41 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining):
     print("Finished simulating {} games with config:".format(numGames))
     print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
     print("Trained for {} games".format(numTraining))
+    if log:
+        # UPDATE THESE VALUES TO INCLUDE IN EXPORT
+        try:
+            alph = agent.alpha
+            eps = agent.epsilon
+            gamma = agent.discount
+        except:
+            alph = eps = gamma = None
+        randomMMV = 1
+        randomRVR = 1
+        # CALCULATE RELATIONSHIPS
+        if randomMMV is None or randomRVR is None or alph is None or eps is None or gamma is None:
+            data = "{}".format(conf["agentType"])
+            data += " & {0:.3f}".format(gameTime / float(numGames))
+            data += " & {} & {}/{}".format(int(np.mean(stack_log)), nMoneyVictories, numGames)
+            data += " ({0:.2%})".format(nMoneyVictories/float(numGames))
+            data += " & {}/{}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)
+            data += " ({0:.2%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses))
+            data += " & - & - & - & -"
+        else:
+            MMVR = (nMoneyVictories/float(numGames)) / float(randomMMV)
+            RVR = (bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses)) / float(randomRVR)
+            data = "{}".format(conf["agentType"])
+            data += " & {0:.3f}".format(gameTime / float(numGames))
+            data += " & {} & {}/{}".format(int(np.mean(stack_log)), nMoneyVictories, numGames)
+            data += " ({0:.2%})".format(nMoneyVictories/float(numGames))
+            data += " & {}/{}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)
+            data += " ({0:.2%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses))
+            data += " & {0:.2%} & {0:.2%}".format(MMVR, RVR)
+            data += " & {} & $\\alpha={}$ $\\gamma={}$ $\\epsilon={}$".format(numTraining, alph, gamma, eps)
+        data += "\\\\\\hline"
+        data = data.replace("%", "\\%")
+        with open("{}.txt".format(conf["agentType"]), "w+") as output:
+            output.write(data)
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
