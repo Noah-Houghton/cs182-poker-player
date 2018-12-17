@@ -21,6 +21,9 @@ def main(argv):
     sb = 10
     log = False
     numTraining = 0
+    numAgents = 1
+    numGames = 1
+    
     helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog>'
     try:
         opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:w", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining=", "writeToLog="])
