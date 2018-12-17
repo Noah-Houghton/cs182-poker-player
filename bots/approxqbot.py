@@ -1,6 +1,8 @@
 from pypokerengine.engine.hand_evaluator import HandEvaluator
 from pypokerengine.players import BasePokerPlayer
 from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_card, gen_cards
+from pypokerengine.utils.game_state_utils import _restore_table
+from pypokerengine.engine.action_checker import ActionChecker
 import numpy as np
 import time
 import random as rand
@@ -27,22 +29,27 @@ class ApproxQBot(BasePokerPlayer):
 
 
     def getLegalActions(self, round_state):
-        street = round_state["street"]
-        min_raise = 0
-        if street in round_state["action_histories"].keys():
-            moves = round_state["action_histories"][street]
-            for move in moves:
-                if move["amount"] > min_raise:
-                    min_raise = move["amount"]
-        min_raise = max(round_state["small_blind_amount"], (min_raise - self.latestBet)) # min raise - last bet
-        max_raise = self.seats[0]["stack"]
-        if max_raise < min_raise:
-            min_raise = max_raise = -1
-        return [
-            { "action" : "fold" , "amount" : 0 },
-            { "action" : "call" , "amount" : min_raise},
-            { "action" : "raise", "amount" : { "min": (min_raise + 1), "max": max_raise } }
-        ]
+        table = _restore_table(round_state)
+        players = table.seats.players
+        return ActionChecker.legal_actions(players, 0, round_state["small_blind_amount"])
+
+    # def getLegalActions(self, round_state):
+    #     street = round_state["street"]
+    #     min_raise = 0
+    #     if street in round_state["action_histories"].keys():
+    #         moves = round_state["action_histories"][street]
+    #         for move in moves:
+    #             if move["amount"] > min_raise:
+    #                 min_raise = move["amount"]
+    #     min_raise = max(round_state["small_blind_amount"], (min_raise - self.latestBet)) # min raise - last bet
+    #     max_raise = self.seats[0]["stack"]
+    #     if max_raise < min_raise:
+    #         min_raise = max_raise = -1
+    #     return [
+    #         { "action" : "fold" , "amount" : 0 },
+    #         { "action" : "call" , "amount" : min_raise},
+    #         { "action" : "raise", "amount" : { "min": (min_raise + 1), "max": max_raise } }
+    #     ]
 
     def getFeatures(self, state, action):
         feats = util.Counter()
@@ -50,26 +57,15 @@ class ApproxQBot(BasePokerPlayer):
 
         feats["hand-strength"] = math.log(HandEvaluator.eval_hand(self.hand, self.cc))
 
-        
+        # feats["relative-cost-to-play"] = -([action]["amount"])/(self.currentMoney)
 
-        # how many times opponent's have raised 
-        # street = round_state["street"]
-        # opp_raises = 0
-        # if street in round_state["action_histories"].keys():
-        #     moves = round_state["action_histories"][street]
-        #     for move in moves:
-        #         if move[]
+        # table = _restore_table(state[1])
+        # players = table.seats.players
+        # all_histories = [p.action_histories for p in players]
+        # all_histories = reduce(lambda acc, e: acc + e, all_histories)  # flatten
+        # raise_histories = [h for h in all_histories if h["action"] in ["RAISE", "SMALLBLIND", "BIGBLIND"]]
+        # feats["opp-confidence"] = (len(raise_histories))/(len(players) - 1)
 
-        # feats[""] = 
-
-        # feats[""] = state[1]
-
-        # feats[""] = 
-
-        # feats["num-players-in"] = state[1]
-        # feats["player-money"] = state[2]
-        # feats["price-to-play"] = state[3]
-        # feats["pot-size"] = state[4]
 
         feats.divideAll(10.0)
         return feats
@@ -126,7 +122,7 @@ class ApproxQBot(BasePokerPlayer):
         community_card = gen_cards(round_state["community_card"])
         hole_card = gen_cards(hole_card)
         handStrength = HandEvaluator.eval_hand(hole_card, community_card)
-        choice = self.getAction((handStrength, round_state["pot"]["main"]["amount"]), valid_actions)
+        choice = self.getAction((handStrength, round_state), valid_actions)
         action = choice["action"]
         amount = choice["amount"]
         if action == 'raise':
@@ -135,6 +131,9 @@ class ApproxQBot(BasePokerPlayer):
         self.latestAction = action
         self.latestBet = amount
         self.currentInvestment += self.latestBet
+        self.update( (HandEvaluator.eval_hand(self.hand, self.cc), round_state), self.latestAction,
+                (HandEvaluator.eval_hand(self.hand, gen_cards(round_state['community_card'])), Emulator.apply_action(, self.latestAction) ),
+                0)
         return action, amount
 
     def receive_game_start_message(self, game_info):
@@ -146,11 +145,7 @@ class ApproxQBot(BasePokerPlayer):
         self.pot = 0
         self.seats = seats
 
-    def receive_street_start_message(self, street, round_state):
-        if street != 'preflop':
-            self.update( (HandEvaluator.eval_hand(self.hand, self.cc), round_state), self.latestAction,
-                (HandEvaluator.eval_hand(self.hand, gen_cards(round_state['community_card'])), round_state['pot']['main']['amount']),
-                0)
+    def receive_street_start_message(self, street, round_state):            
         self.pot = round_state['pot']['main']['amount']
         self.cc = gen_cards(round_state['community_card'])
         self.currentMoney = self.currentMoney = [s["stack"] for s in round_state["seats"] if s["uuid"] == self.uuid][0]
