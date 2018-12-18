@@ -1,4 +1,8 @@
+# you can comment like this in tests.txt
+# RandomBot Tests
 -p RandomBot -o NaiveBot -n 1 -g 1 -a 5 -s 500 -r 50 -m 15
 -p RandomBot -o NaiveBot -n 1 -g 10 -a 5 -s 500 -r 50 -m 15
+# FishBot Tests
 -p FishBot -o NaiveBot -n 1 -g 10 -a 5 -s 500 -r 50 -m 15
--p SarsaBot -o NaiveBot -n 1 -g 10 -a 5 -s 500 -r 50 -m 15 -t 10
+# SARSABot Tests
+-p SARSABot -o NaiveBot -n 1 -g 10 -a 5 -s 500 -r 50 -m 15 -t 10
