@@ -1,67 +1,32 @@
 # you can comment like this in tests.txt
 
 # spaces are also ok
-# RandomBot Tests
--p RandomBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
--p RandomBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15
--p RandomBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 15
--p RandomBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
--p RandomBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 4
--p RandomBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 4
--p RandomBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
--p RandomBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 15
--p RandomBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 15 -m 15
--p RandomBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
--p RandomBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 4
--p RandomBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 15 -m 4
-
-# FishBot Tests
--p FishBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
--p FishBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15
--p FishBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 15
--p FishBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
--p FishBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 4
--p FishBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 4
--p FishBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
--p FishBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 15
--p FishBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 15 -m 15
--p FishBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
--p FishBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 4
--p FishBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 15 -m 4
 
 # NaiveBot Tests
 -p NaiveBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
 -p NaiveBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15
--p NaiveBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 15
 -p NaiveBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
 -p NaiveBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 4
--p NaiveBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 4
 -p NaiveBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
 -p NaiveBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 15
--p NaiveBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 15 -m 15
 -p NaiveBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
 -p NaiveBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 4
--p NaiveBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 15 -m 4
 
 # LookAheadBot Tests
 -p LookAheadBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
 -p LookAheadBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15
--p LookAheadBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 15
 -p LookAheadBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
 -p LookAheadBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
 -p LookAheadBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
 -p LookAheadBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 4
--p LookAheadBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 4
 -p LookAheadBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
 -p LookAheadBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
 -p LookAheadBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
 -p LookAheadBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 15
--p LookAheadBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 15 -m 15
 -p LookAheadBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
 -p LookAheadBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
 -p LookAheadBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
 -p LookAheadBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 4
--p LookAheadBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 15 -m 4
 -p LookAheadBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
 -p LookAheadBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
 
@@ -374,21 +339,17 @@
 # MonteCarloBot Tests
 -p MonteCarloBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
 -p MonteCarloBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15
--p MonteCarloBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 15
 -p MonteCarloBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
 -p MonteCarloBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
 -p MonteCarloBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
 -p MonteCarloBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 4
--p MonteCarloBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 4
 -p MonteCarloBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
 -p MonteCarloBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
 -p MonteCarloBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
 -p MonteCarloBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 15
--p MonteCarloBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 15 -m 15
 -p MonteCarloBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
 -p MonteCarloBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
 -p MonteCarloBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
 -p MonteCarloBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 4
--p MonteCarloBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 15 -m 4
 -p MonteCarloBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
 -p MonteCarloBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4

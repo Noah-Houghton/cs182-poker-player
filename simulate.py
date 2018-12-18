@@ -161,7 +161,10 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
     consoleLog("Average game time {} seconds".format(gameTime / float(numGames)))
     consoleLog("Avg. agent stack after {} games: {} vs start @ {}".format(numGames, int(np.mean(stack_log)), conf["s"]))
     consoleLog("Agent had most money {} games out of {}".format(nMoneyVictories, numGames) +" ({0:.0%})".format(nMoneyVictories/float(numGames)))
-    consoleLog("Round win rate: {} out of {}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)+" ({0:.0%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses)))
+    try:
+        consoleLog("Round win rate: {} out of {}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)+" ({0:.0%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses)))
+    except:
+        pass
     consoleLog("Finished simulating {} games with config:".format(numGames))
     consoleLog("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
     try:
@@ -189,8 +192,11 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
             data += " & {0:.3f}".format(gameTime / float(numGames))
             data += " & {} vs {} @start & {}/{}".format(int(np.mean(stack_log)),conf["s"], nMoneyVictories, numGames)
             data += " ({0:.2%})".format(nMoneyVictories/float(numGames))
-            data += " & {}/{}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)
-            data += " ({0:.2%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses))
+            try:
+                data += " & {}/{}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)
+                data += " ({0:.2%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses))
+            except:
+                data += " & - & -"
             data += " & - & - & - & -"
         else:
             MMVR = (nMoneyVictories/float(numGames)) / float(randomMMV)
@@ -199,8 +205,11 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
             data += " & {0:.3f}".format(gameTime / float(numGames))
             data += " & {} & {}/{}".format(int(np.mean(stack_log)), nMoneyVictories, numGames)
             data += " ({0:.2%})".format(nMoneyVictories/float(numGames))
-            data += " & {}/{}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)
-            data += " ({0:.2%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses))
+            try:
+                data += " & {}/{}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)
+                data += " ({0:.2%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses))
+            except:
+                data += " & - & -"
             data += " & {0:.2%} & {0:.2%}".format(MMVR, RVR)
             data += " & {} & $\\alpha={}$ $\\gamma={}$ $\\epsilon={}$".format(numTraining, alph, gamma, eps)
         data += "\\\\\\hline"
