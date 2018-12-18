@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# bot testing
+*Bot.txt
+*_configs.txt
+
 # game config
 *.yaml
 
