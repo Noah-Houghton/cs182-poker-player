@@ -8,21 +8,13 @@ import random as rand
 import util
 import math
 
-def adjusted_montecarlo_simulation(nb_player, hole_card, community_card):
-    # Do a Monte Carlo simulation given the current state of the game by evaluating the hands
-    community_card = _fill_community_card(community_card, used_card=hole_card + community_card)
-    unused_cards = _pick_unused_card((nb_player - 1) * 2, hole_card + community_card)
-    opponents_hole = [unused_cards[2 * i:2 * i + 2] for i in range(nb_player - 1)]
-    opponents_score = [HandEvaluator.eval_hand(hole, community_card) for hole in opponents_hole]
-    my_score = HandEvaluator.eval_hand(hole_card, community_card)
-    return my_score / max(opponents_score)
 
 class QLearnBot(BasePokerPlayer):
     def __init__(self):
         super(QLearnBot, self).__init__()
         self.qvalues = util.Counter()
         self.epsilon = .15
-        self.alpha = .6
+        self.alpha = .3
         self.discount = 1
         self.roundWins = 0
         self.roundLosses = 0
@@ -38,7 +30,7 @@ class QLearnBot(BasePokerPlayer):
         self.currentInvestment = 0
 
     def getState(self, strength):
-        return int(math.log(strength, 1.5))
+        return int(math.log(strength, 1.05))
         # return strength 
 
     def getLegalActions(self, round_state):
@@ -95,7 +87,7 @@ class QLearnBot(BasePokerPlayer):
         cur_state = self.getState(HandEvaluator.eval_hand(self.hand, self.curCC))
         new_state = self.getState(HandEvaluator.eval_hand(self.hand, newCC))
         if self.haveActed:
-            self.update(cur_state, self.latestAction, new_state, 5, round_state)
+            self.update(cur_state, self.latestAction, new_state, 0, round_state)
         self.curCC = newCC
         choice = self.getAction(new_state, valid_actions)
         action = choice["action"]
@@ -140,13 +132,12 @@ class QLearnBot(BasePokerPlayer):
         reward = 0
         if is_winner:
             reward = (agentWon[0] - self.currentMoney)
-            reward = math.log(reward) * 5
+            reward = math.log(reward) 
         elif self.currentInvestment > 0:
             reward = math.log(self.currentInvestment) * -1.0
         cur_state = self.getState(HandEvaluator.eval_hand(self.hand, self.curCC))
         if self.haveActed:
             self.update(cur_state, self.latestAction, None, reward, round_state)
- 
 
 def setup_ai():
     return QLearnBot()
