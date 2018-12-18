@@ -12,6 +12,8 @@ Example command line to run with custom config
 python simulate.py -p MonteCarloBot -o RandomBot -n 3 -g 10 -a 5 -s 500 -r 15 -m 15
 """
 
+PRINTQVALUES = True
+
 def main(argv):
     # defaults for config
     a = 0
@@ -133,10 +135,11 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
     print("Finished simulating {} games with config:".format(numGames))
     print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
     print("Trained for {} games".format(numTraining))
-    try:
-        print("agent qvals {}".format(agent.qvalues))
-    except:
-        pass
+    if PRINTQVALUES:
+        try:
+            print("agent qvals {}".format(agent.qvalues))
+        except:
+            pass
     if log:
         # UPDATE THESE VALUES TO INCLUDE IN EXPORT
         try:
