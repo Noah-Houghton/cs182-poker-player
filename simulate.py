@@ -15,7 +15,7 @@ python simulate.py -p MonteCarloBot -o RandomBot -n 3 -g 10 -a 5 -s 500 -r 15 -m
 PRINTQVALUES = False
 
 # PRINTRESULT = True
-PRINTRESULT = False
+PRINTRESULT = True
 
 def consoleLog(str):
     if PRINTRESULT:

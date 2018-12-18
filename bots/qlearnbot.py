@@ -15,7 +15,7 @@ class QLearnBot(BasePokerPlayer):
         self.qvalues = util.Counter()
         self.epsilon = .15
         self.alpha = .3
-        self.discount = 1
+        self.discount = .9
         self.roundWins = 0
         self.roundLosses = 0
         self.hand = None

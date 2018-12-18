@@ -9,10 +9,10 @@ import random as rand
 import util
 import math
 
-class ApproxQBot(BasePokerPlayer):
+class FancyApproxBot (BasePokerPlayer):
 
     def __init__(self):
-        super(ApproxQBot, self).__init__()
+        super(FancyApproxBot, self).__init__()
         self.weights = util.Counter()
         self.epsilon = .3
         self.alpha = .2
@@ -44,18 +44,18 @@ class ApproxQBot(BasePokerPlayer):
         if action["action"] != "fold":
             feats["hand-strength"] = math.log(state[0])/100.0
 
-        # feats["opp-confidence"] = 0
-        # if action["action"] != "fold":
-        #     streets = state[1]["action_histories"]
-        #     confidence = 0
-        #     for street in streets:
-        #         for act in streets[street]:
-        #             if act["uuid"] != self.uuid:
-        #                 if act["action"] == "RAISE" :
-        #                     confidence += 5
-        #                 elif act["action"] == "CALL":
-        #                     confidence += 1
-        #     feats["opp-confidence"] = float(confidence)/100.0
+        feats["opp-confidence"] = 0
+        if action["action"] != "fold":
+            streets = state[1]["action_histories"]
+            confidence = 0
+            for street in streets:
+                for act in streets[street]:
+                    if act["uuid"] != self.uuid:
+                        if act["action"] == "RAISE" :
+                            confidence += 5
+                        elif act["action"] == "CALL":
+                            confidence += 1
+            feats["opp-confidence"] = float(confidence)/100.0
 
 
         #feats["money-left"] = float([s["stack"] for s in state[1]["seats"] if s["uuid"] == self.uuid][0])/100.0
@@ -179,6 +179,8 @@ class ApproxQBot(BasePokerPlayer):
         #     reward = -10
         if self.haveActed:
             self.update((hand_strength, round_state), self.latestAction, None, reward)
+            if self.doUpdate:
+                print self.weights
 
 def setup_ai():
-    return ApproxQBot()
+    return FancyApproxBot()
