@@ -1,0 +1,73 @@
+# you can comment like this in tests.txt
+
+# spaces are also OK
+# RandomBot Tests
+-p RandomBot -o NaiveBot -n 1 -g 1 -a 5 -s 500 -r 50 -m 15
+-p RandomBot -o NaiveBot -n 1 -g 10 -a 5 -s 500 -r 50 -m 15
+
+# FishBot Tests
+-p FishBot -o NaiveBot -n 1 -g 10 -a 5 -s 500 -r 50 -m 15
+-p FishBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 15
+
+# NaiveBot Tests
+-p NaiveBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15
+-p NaiveBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 50 -m 15
+
+# LookAheadBot Tests
+-p LookAheadBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 100 -m 15
+-p LookAheadBot -o NaiveBot -n 1 -g 10000 -a 5 -s 500 -r 100 -m 15
+-p LookAheadBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 100 -m 15
+-p LookAheadBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 100 -m 15
+
+# QLearnBot Tests
+
+# alpha
+# -l 0.9 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 0 -l 0.9 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 100 -l 0.9 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 1000 -l 0.9 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 2500 -l 0.9 -e 0.15 -d 0.9
+# -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 0 -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 100 -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 1000 -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 2500 -l 0.3 -e 0.15 -d 0.9
+# -l 0.1 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 0 -l 0.1 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 100 -l 0.1 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 1000 -l 0.1 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 2500 -l 0.1 -e 0.15 -d 0.9
+
+# epsilon
+# -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 0 -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 100 -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 1000 -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 2500 -l 0.3 -e 0.15 -d 0.9
+# -l 0.3 -e 0.5 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 0 -l 0.3 -e 0.5 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 100 -l 0.3 -e 0.5 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 1000 -l 0.3 -e 0.5 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 2500 -l 0.3 -e 0.5 -d 0.9
+# -l 0.3 -e 0.9 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 0 -l 0.3 -e 0.9 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 100 -l 0.3 -e 0.9 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 1000 -l 0.3 -e 0.9 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 2500 -l 0.3 -e 0.9 -d 0.9
+
+# gamma
+# -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 0 -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 100 -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 1000 -l 0.3 -e 0.15 -d 0.9
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 2500 -l 0.3 -e 0.15 -d 0.9
+# -l 0.3 -e 0.15 -d 0.5
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 0 -l 0.3 -e 0.15 -d 0.5
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 100 -l 0.3 -e 0.15 -d 0.5
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 1000 -l 0.3 -e 0.15 -d 0.5
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 2500 -l 0.3 -e 0.15 -d 0.5
+# -l 0.3 -e 0.15 -d 0.1
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 0 -l 0.3 -e 0.15 -d 0.1
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 100 -l 0.3 -e 0.15 -d 0.
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 1000 -l 0.3 -e 0.15 -d 0.1
+-p QLearnBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15 -t 2500 -l 0.3 -e 0.15 -d 0.1
