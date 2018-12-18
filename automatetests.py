@@ -14,15 +14,18 @@ them in `XXXbot.txt` to prevent logging the data twice!
 
 """
 
+SIMSPERTEST = 10
+
 def main():
     testNum = 1
     with open("tests.txt", "r") as input:
         argslist = [s for s in input.readlines() if not s == '\n']
     for args in argslist:
         if not args.startswith("#"):
-            print("Beginning test {}".format(testNum))
-            simulate.main(args.split()+["-w"])
-            testNum += 1
+            for i in range(SIMSPERTEST):
+                print("Beginning test {}".format(testNum))
+                simulate.main(args.split()+["-w"])
+                testNum += 1
 
 if __name__ == '__main__':
     main()
