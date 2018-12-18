@@ -109,6 +109,10 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
     if not numTraining == 0:
         consoleLog("Beginning {} training games".format(numTraining))
         trainingTime = time.time()
+    try:
+        agent.doUpdate = True
+    except:
+        pass
     for round in range(numTraining):
         # run numTraining training games
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
@@ -125,7 +129,11 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
         if round == numTraining*3/4:
             consoleLog("75% trained")
         if round == numTraining*9/10:
-            consoleLog("90% trained")
+            print("90% trained")
+    try:   
+        agent.doUpdate = False
+    except:
+        pass
     if not numTraining == 0:
         consoleLog("Training complete!")
         trainingTime = time.time() - trainingTime

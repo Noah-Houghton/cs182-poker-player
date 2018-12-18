@@ -2,7 +2,40 @@
 
 # spaces are also ok
 
+<<<<<<< HEAD
 # SARSABot Tests
+=======
+
+# NaiveBot Tests
+-p NaiveBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
+-p NaiveBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15
+-p NaiveBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
+-p NaiveBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 4
+-p NaiveBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
+-p NaiveBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 15
+-p NaiveBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
+-p NaiveBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 4
+
+# LookAheadBot Tests
+-p LookAheadBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
+-p LookAheadBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 15
+-p LookAheadBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
+-p LookAheadBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 15
+-p LookAheadBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
+-p LookAheadBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 50 -m 4
+-p LookAheadBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
+-p LookAheadBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 50 -m 4
+-p LookAheadBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
+-p LookAheadBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 15
+-p LookAheadBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
+-p LookAheadBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 15
+-p LookAheadBot -o NaiveBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
+-p LookAheadBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 4
+-p LookAheadBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
+-p LookAheadBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
+
+# QLearnBot Tests
+>>>>>>> 411ef4fda3cef3fd03c08db0779257b134e525ff
 
 # alpha
 # -l 0.9 -e 0.15 -d 0.9
@@ -325,3 +358,4 @@
 -p MonteCarloBot -o NaiveBot -n 1 -g 1000 -a 5 -s 500 -r 15 -m 4
 -p MonteCarloBot -o RandomBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
 -p MonteCarloBot -o FishBot -n 1 -g 100 -a 5 -s 500 -r 15 -m 4
+

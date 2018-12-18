@@ -9,7 +9,7 @@ import util
 import math
 
 
-class QLearnBot(BasePokerPlayer):
+class SmallQBot (BasePokerPlayer):
     def __init__(self):
         super(QLearnBot, self).__init__()
         self.qvalues = util.Counter()
@@ -31,8 +31,8 @@ class QLearnBot(BasePokerPlayer):
         self.doUpdate = True
 
     def getState(self, strength):
-        # return int(math.log(strength, 1.05))
-        return strength 
+        return int(math.log(strength, 1.05))
+        # return strength 
 
     def getLegalActions(self, round_state):
         table = _restore_table(round_state)
@@ -142,4 +142,4 @@ class QLearnBot(BasePokerPlayer):
             self.update(cur_state, self.latestAction, None, reward, round_state)
 
 def setup_ai():
-    return QLearnBot()
+    return SmallQBot()
