@@ -14,7 +14,7 @@ them in `XXXbot.txt` to prevent logging the data twice!
 
 """
 
-SIMSPERTEST = 10
+SIMSPERTEST = 1
 
 def main():
     testNum = 1
