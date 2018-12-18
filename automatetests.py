@@ -17,7 +17,7 @@ them in `XXXbot.txt` to prevent logging the data twice!
 def main():
     testNum = 1
     with open("tests.txt", "r") as input:
-        argslist = input.readlines()
+        argslist = [s for s in input.readlines() if not s == '\n']
     for args in argslist:
         if not args.startswith("#"):
             print("Beginning test {}".format(testNum))

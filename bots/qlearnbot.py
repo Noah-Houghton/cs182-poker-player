@@ -28,6 +28,7 @@ class QLearnBot(BasePokerPlayer):
         self.haveActed = False
         self.currentMoney = 0
         self.currentInvestment = 0
+        self.doUpdate = True
 
     def getState(self, strength):
         # return int(math.log(strength, 1.05))
@@ -75,11 +76,12 @@ class QLearnBot(BasePokerPlayer):
             return self.computeActionFromQValues(state, actions)
 
     def update(self, state, action, next_state, reward, new_round_state):
-        nextactionvalue = 0
-        if next_state != None:
-            nextactionvalue = self.computeValueFromQValues(next_state, self.getLegalActions(new_round_state))
-        actionvalue = self.getQValue(state,action)
-        self.qvalues[(state, action)] = ((1-self.alpha) * actionvalue) + (self.alpha * (reward + (self.discount * nextactionvalue)))
+        if self.doUpdate:
+            nextactionvalue = 0
+            if next_state != None:
+                nextactionvalue = self.computeValueFromQValues(next_state, self.getLegalActions(new_round_state))
+            actionvalue = self.getQValue(state,action)
+            self.qvalues[(state, action)] = ((1-self.alpha) * actionvalue) + (self.alpha * (reward + (self.discount * nextactionvalue)))
 
 
     def declare_action(self, valid_actions, hole_card, round_state):

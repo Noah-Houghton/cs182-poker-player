@@ -129,15 +129,11 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
         if round == numTraining*3/4:
             consoleLog("75% trained")
         if round == numTraining*9/10:
-<<<<<<< HEAD
             print("90% trained")
     try:   
         agent.doUpdate = False
     except:
         pass
-=======
-            consoleLog("90% trained")
->>>>>>> bbb5e721a500646a042afa360cc4ab00395332b6
     if not numTraining == 0:
         consoleLog("Training complete!")
         trainingTime = time.time() - trainingTime
@@ -217,11 +213,11 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
             data += " & {} & $\\alpha={}$ $\\gamma={}$ $\\epsilon={}$".format(numTraining, alph, gamma, eps)
         data += "\\\\\\hline"
         data = data.replace("%", "\\%")
-        with open("{}.txt".format(conf["agentType"]), "a+") as output:
+        with open("outputs/{}.txt".format(conf["agentType"]), "a+") as output:
             output.write(data+"\n")
 
         configuration = "Ante: {} Small Blind: {} Initial Stack: {} Max Round: {} Number Opponents: {} Opponent Type: {}\n".format(conf["a"], conf["sb"], conf["s"], conf["r"], numAgents, conf["opponentType"])
-        with open("{}_configs.txt".format(conf["agentType"]), "a+") as output:
+        with open("outputs/{}_configs.txt".format(conf["agentType"]), "a+") as output:
             output.write(configuration)
 
 
