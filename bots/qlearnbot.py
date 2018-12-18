@@ -30,8 +30,8 @@ class QLearnBot(BasePokerPlayer):
         self.currentInvestment = 0
 
     def getState(self, strength):
-        return int(math.log(strength, 1.05))
-        # return strength 
+        # return int(math.log(strength, 1.05))
+        return strength 
 
     def getLegalActions(self, round_state):
         table = _restore_table(round_state)
