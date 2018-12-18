@@ -35,6 +35,7 @@ class SARSABot(BasePokerPlayer):
         self.currAction = None
         self.currState = None
         self.currentInvestment = 0
+        self.doUpdate = True
 
     def getQValue(self, state, action):
         if action not in ('fold', 'call', 'raise'):
@@ -72,7 +73,8 @@ class SARSABot(BasePokerPlayer):
             return self.computeActionFromQValues(state, actions)
 
     def update(self, prev_state, prev_action, curr_state, curr_action, reward, round_state):
-        self.qvalues[(prev_state, prev_action["action"])] = self.getQValue(prev_state, prev_action["action"]) + self.alpha * (reward + (self.discount * self.getQValue(curr_state, curr_action["action"])) - self.getQValue(prev_state, prev_action["action"]))
+        if self.doUpdate:
+            self.qvalues[(prev_state, prev_action["action"])] = self.getQValue(prev_state, prev_action["action"]) + self.alpha * (reward + (self.discount * self.getQValue(curr_state, curr_action["action"])) - self.getQValue(prev_state, prev_action["action"]))
 
     def declare_action(self, valid_actions, hole_card, round_state):
         community_card = gen_cards(round_state["community_card"])
