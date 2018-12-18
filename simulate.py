@@ -2,7 +2,6 @@ from pypokerengine.api.game import start_poker, setup_config
 import numpy as np
 import sys, getopt, time
 import importlib
-# import agents
 
 """
 Example command line to run with default config
@@ -14,6 +13,17 @@ python simulate.py -p MonteCarloBot -o RandomBot -n 3 -g 10 -a 5 -s 500 -r 15 -m
 
 # PRINTQVALUES = True
 PRINTQVALUES = False
+
+# PRINTRESULT = True
+PRINTRESULT = False
+
+def consoleLog(str):
+    if PRINTRESULT:
+        print(str)
+
+def QLog(str):
+    if PRINTQVALUES:
+        print(str)
 
 def main(argv):
     # defaults for config
@@ -78,7 +88,7 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
     stack_log = []
     nMoneyVictories = 0
     if not numTraining == 0:
-        print("Beginning {} training games".format(numTraining))
+        consoleLog("Beginning {} training games".format(numTraining))
         trainingTime = time.time()
     for round in range(numTraining):
         # run numTraining training games
@@ -90,22 +100,22 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
         config.set_blind_structure(conf["b"])
         start_poker(config, verbose=0)
         if round == numTraining/4:
-            print("25% trained")
+            consoleLog("25% trained")
         if round == numTraining/2:
-            print("50% trained")
+            consoleLog("50% trained")
         if round == numTraining*3/4:
-            print("75% trained")
+            consoleLog("75% trained")
         if round == numTraining*9/10:
-            print("90% trained")
+            consoleLog("90% trained")
     if not numTraining == 0:
-        print("Training complete!")
+        consoleLog("Training complete!")
         trainingTime = time.time() - trainingTime
         for bot in bots:
             # forget record from training games
             bot.roundWins = 0
             bot.roundLosses = 0
     gameTime = time.time()
-    print("Beginning {} games.".format(numGames))
+    consoleLog("Beginning {} games.".format(numGames))
     for round in range(numGames):
         config = setup_config(max_round=conf["r"], initial_stack=conf["s"], small_blind_amount=conf["sb"], ante=conf["a"])
         for i in range(len(bots)):
@@ -115,36 +125,35 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
         # prints the average stack as the games advance
         stack_log.append([player['stack'] for player in game_result['players'] if player['uuid'] == agent.uuid])
         if round == numGames/4:
-            print("simulation 25% complete")
+            consoleLog("simulation 25% complete")
         if round == numGames/2:
-            print("simulation 50% complete")
+            consoleLog("simulation 50% complete")
         if round == numGames*3/4:
-            print("simulation 75% complete")
+            consoleLog("simulation 75% complete")
         if round == numGames*9/10:
-            print("simulation 90% complete")
+            consoleLog("simulation 90% complete")
         allStacks = [player['stack'] for player in game_result['players']]
         if max(allStacks) == stack_log[round][0]:
             nMoneyVictories += 1
     gameTime = time.time() - gameTime
     if not numTraining == 0:
-        print("training time: {} seconds".format(trainingTime))
+        consoleLog("training time: {} seconds".format(trainingTime))
     # print(bots[0].qvalues)
-    print("Average game time {} seconds".format(gameTime / float(numGames)))
-    print("Avg. agent stack after {} games: {} vs start @ {}".format(numGames, int(np.mean(stack_log)), conf["s"]))
-    print("Agent had most money {} games out of {}".format(nMoneyVictories, numGames) +" ({0:.0%})".format(nMoneyVictories/float(numGames)))
-    print("Round win rate: {} out of {}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)+" ({0:.0%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses)))
-    print("Finished simulating {} games with config:".format(numGames))
-    print("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
+    consoleLog("Average game time {} seconds".format(gameTime / float(numGames)))
+    consoleLog("Avg. agent stack after {} games: {} vs start @ {}".format(numGames, int(np.mean(stack_log)), conf["s"]))
+    consoleLog("Agent had most money {} games out of {}".format(nMoneyVictories, numGames) +" ({0:.0%})".format(nMoneyVictories/float(numGames)))
+    consoleLog("Round win rate: {} out of {}".format(bots[0].roundWins, bots[0].roundWins + bots[0].roundLosses)+" ({0:.0%})".format(bots[0].roundWins/float(bots[0].roundWins + bots[0].roundLosses)))
+    consoleLog("Finished simulating {} games with config:".format(numGames))
+    consoleLog("Max round {}\nInitial stack {}\nSmall blind {}\nAnte {}\n{} {} opponents\nPlayer agent {}".format(conf["r"], conf["s"], conf["sb"], conf["a"], numAgents, conf["opponentType"], conf["agentType"]))
     try:
-        print("Hyperparams: A = {}, G = {}, E = {}".format(agent.alpha, agent.discount, agent.epsilon))
+        consoleLog("Hyperparams: A = {}, G = {}, E = {}".format(agent.alpha, agent.discount, agent.epsilon))
     except:
         pass
-    print("Trained for {} games".format(numTraining))
-    if PRINTQVALUES:
-        try:
-            print("agent qvals {}".format(agent.qvalues))
-        except:
-            pass
+    consoleLog("Trained for {} games".format(numTraining))
+    try:
+        QLog("agent qvals {}".format(agent.qvalues))
+    except:
+        pass
     if log:
         # UPDATE THESE VALUES TO INCLUDE IN EXPORT
         try:
@@ -177,8 +186,12 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
             data += " & {} & $\\alpha={}$ $\\gamma={}$ $\\epsilon={}$".format(numTraining, alph, gamma, eps)
         data += "\\\\\\hline"
         data = data.replace("%", "\\%")
-        with open("{}.txt".format(conf["agentType"]), "w+") as output:
-            output.write(data)
+        with open("{}.txt".format(conf["agentType"]), "a+") as output:
+            output.write(data+"\n")
+
+        configuration = "Ante: {} Small Blind: {} Initial Stack: {} Max Round: {} Number Opponents: {} Opponent Type: {}\n".format(conf["a"], conf["sb"], conf["s"], conf["r"], numAgents, conf["opponentType"])
+        with open("{}_configs.txt".format(conf["agentType"]), "a+") as output:
+            output.write(configuration)
 
 
 if __name__ == '__main__':
