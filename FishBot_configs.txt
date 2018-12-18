@@ -1,2 +1,0 @@
-Ante: 5 Small Blind: 15 Initial Stack: 500 Max Round: 50 Number Opponents: 1 Opponent Type: NaiveBot
-Ante: 5 Small Blind: 15 Initial Stack: 500 Max Round: 50 Number Opponents: 1 Opponent Type: NaiveBot
