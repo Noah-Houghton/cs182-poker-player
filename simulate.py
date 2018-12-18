@@ -37,9 +37,9 @@ def main(argv):
     numAgents = 1
     numGames = 1
 
-    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog>'
+    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog> -l <alpha> -e <epsilon> -d <discount>'
     try:
-        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:w", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining=", "writeToLog="])
+        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:wl:e:d:", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining=", "writeToLog=", "alpha=", "epsilon=", "discount="])
     except getopt.GetoptError:
         print(helpMessage)
         sys.exit(2)
@@ -69,6 +69,13 @@ def main(argv):
             numTraining = int(arg)
         elif opt in ('-w', "--writeToLog"):
             log = True
+        elif opt in ('-l', "--alpha"):
+            alpha = float(arg)
+        elif opt in ('-e', '--epsilon'):
+            epsilon = float(arg)
+        elif opt in ('-d', '--discount'):
+            discount = float(arg)
+
 
     bots = []
     module = importlib.import_module('.'+agentType.lower(), package="bots")
@@ -76,6 +83,18 @@ def main(argv):
     # class_ = getattr(module, agentType)
     # agent = class_()
     bots.append(agent)
+    try:
+        agent.alpha = alpha
+    except:
+        pass
+    try:
+        agent.epsilon = epsilon
+    except:
+        pass
+    try:
+        agent.discount = discount
+    except:
+        pass
     for _ in range(numAgents):
         module = importlib.import_module('.'+opponentType.lower(), package="bots")
         opponent = module.setup_ai()
