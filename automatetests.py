@@ -2,7 +2,7 @@ import subprocess
 import simulate
 
 def main():
-    testNum = 0
+    testNum = 1
     with open("tests.txt", "r") as input:
         argslist = input.readlines()
     for args in argslist:
