@@ -36,7 +36,7 @@ class MonteCarloBot(BasePokerPlayer):
 
     def declare_action(self, valid_actions, hole_card, round_state):
         # Estimate the win rate
-        win_rate = estimate_win_rate(100, self.num_players, hole_card, round_state['community_card'])
+        win_rate = estimate_win_rate(1000, self.num_players, hole_card, round_state['community_card'])
 
         # Check whether it is possible to call
         can_call = len([item for item in valid_actions if item['action'] == 'call']) > 0

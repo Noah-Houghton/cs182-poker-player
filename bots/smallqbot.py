@@ -11,7 +11,7 @@ import math
 
 class SmallQBot (BasePokerPlayer):
     def __init__(self):
-        super(QLearnBot, self).__init__()
+        super(SmallQLearnBot, self).__init__()
         self.qvalues = util.Counter()
         self.epsilon = .15
         self.alpha = .3

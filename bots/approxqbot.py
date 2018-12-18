@@ -42,7 +42,7 @@ class ApproxQBot(BasePokerPlayer):
 
         feats["hand-strength"] = 0
         if action["action"] != "fold":
-            feats["hand-strength"] = math.log(state[0])/10
+            feats["hand-strength"] = math.log(state[0])/100.0
 
         # feats["opp-confidence"] = 0
         # if action["action"] != "fold":
@@ -172,14 +172,13 @@ class ApproxQBot(BasePokerPlayer):
         hand_strength = HandEvaluator.eval_hand(self.hand, self.curCC)
         agentWon = [winner["stack"] for winner in winners if winner["uuid"] == self.uuid]
         if is_winner:
-            reward = math.log((agentWon[0] - self.currentMoney))
+            reward = math.log((agentWon[0] - self.currentMoney)) * 1.2
         elif self.currentInvestment > 0:
             reward = math.log(self.currentInvestment) * -1.0
         # elif self.currentMoney == 0:
         #     reward = -10
         if self.haveActed:
             self.update((hand_strength, round_state), self.latestAction, None, reward)
-            print self.weights
 
 def setup_ai():
     return ApproxQBot()
