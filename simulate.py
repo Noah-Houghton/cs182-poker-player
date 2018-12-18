@@ -205,11 +205,11 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
             data += " & {} & $\\alpha={}$ $\\gamma={}$ $\\epsilon={}$".format(numTraining, alph, gamma, eps)
         data += "\\\\\\hline"
         data = data.replace("%", "\\%")
-        with open("{}.txt".format(conf["agentType"]), "a+") as output:
+        with open("outputs/{}.txt".format(conf["agentType"]), "a+") as output:
             output.write(data+"\n")
 
         configuration = "Ante: {} Small Blind: {} Initial Stack: {} Max Round: {} Number Opponents: {} Opponent Type: {}\n".format(conf["a"], conf["sb"], conf["s"], conf["r"], numAgents, conf["opponentType"])
-        with open("{}_configs.txt".format(conf["agentType"]), "a+") as output:
+        with open("outputs/{}_configs.txt".format(conf["agentType"]), "a+") as output:
             output.write(configuration)
 
 
