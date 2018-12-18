@@ -129,8 +129,8 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
         if round == numTraining*3/4:
             consoleLog("75% trained")
         if round == numTraining*9/10:
-            print("90% trained")
-    try:   
+            consoleLog("90% trained")
+    try:
         agent.doUpdate = False
     except:
         pass
