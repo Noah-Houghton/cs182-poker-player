@@ -81,17 +81,3 @@ would go after receive_round_result_message(), tabbed in at the same level as cl
 ### Documentation
 - Official PyPokerEngine Documentation: https://ishikota.github.io/PyPokerEngine/
 - More about callback functions: https://github.com/ishikota/PyPokerEngine/blob/master/AI_CALLBACK_FORMAT.md
-    - Goes through what each function is actually receiving, will be useful when building our agents.
-
-### Algorithms
-- SARSA (https://en.wikipedia.org/wiki/State%E2%80%93action%E2%80%93reward%E2%80%93state%E2%80%93action)
-
-# Internal Checklist
-## Kyle
-- [ ] Lookahead
-- [ ] Etc.
-## Phil
-- [ ] Q-Learning
-- [ ] HMM?
-## Matt
-- [ ] Advanced Agent
