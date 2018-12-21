@@ -36,7 +36,7 @@ class QLearnBot(BasePokerPlayer):
         self.currentMoney = 0
         self.currentInvestment = 0
         self.doUpdate = True
-        self.SAVEVALS = False
+        self.SAVEVALS = True
 
     def saveValues(self):
         with open(VALUESFILE, 'w+') as f:

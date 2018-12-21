@@ -40,7 +40,9 @@ Example command line to run with custom config
 
 Note that the latter three values `-l`, `-e`, and `-d` are only used in QLearning agents. If they are accidentally left in, the simulator will ignore them. The default values for these variables are not defined by `simulate.py`, but rather by the agents themselves in their `__init__` function.
 
-If `-q` is included, the relevant values generated during training will be saved to the `saved_values` folder. These values will then be used by an agent run in the GUI, allowing you to play against the most recently trained agent of that type. This value is set to false by default, as it causes the agent to remember its most recent game - a significant issue if you're trying to run many trainings independently, but a fun way to see the results of your algorithms if you are not. 
+If `-v` is included, the relevant values generated during training will be saved to the `saved_values` folder. These values will then be used by an agent run in the GUI, allowing you to play against the most recently trained agent of that type. This value is set to false by default, as it causes the agent to remember its most recent game - a significant issue if you're trying to run many trainings independently, but a fun way to see the results of your algorithms if you are not. To enable this feature, set `self.SAVEVALS` to `True` in `ZZZbot.py`.
+
+This has to be done, even if you've used `-v` in your simulate command. This is an unfortunate side effect of the `PyPokerGUI`, which makes it difficult to propagate this command. In short: `-v` will save the values, change the value in `ZZZbot.py` to actually see the values reflected in the poker GUI.
 
 ## Coding an Agent
 Agents should be set up in their own python file. Ensure that the name of the agent is the same as the file (camelCase does not have to match), e.g. exampleagent.py contains ExampleAgent(). Although your agent can be named in camelcase, IT IS CRUCIAL THAT YOU DO NOT HAVE A FILE NAME IN CAMELCASE. File names should be in lowercase as one word - violating this invariant will break setupgame.py, which means you'll have to manually edit the poker_conf.yaml file.

@@ -35,7 +35,7 @@ class FancyApproxBot (BasePokerPlayer):
         self.last_round_state = None
         self.curCC = None
         self.doUpdate = True
-        self.SAVEVALS = False
+        self.SAVEVALS = True
 
     def saveValues(self):
         with open(VALUESFILE, 'w+') as f:

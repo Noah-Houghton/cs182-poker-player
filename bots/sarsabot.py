@@ -42,7 +42,7 @@ class SARSABot(BasePokerPlayer):
         self.currState = None
         self.currentInvestment = 0
         self.doUpdate = True
-        self.SAVEVALS = False
+        self.SAVEVALS = True
 
     def saveValues(self):
         with open(VALUESFILE, 'w+') as f:
