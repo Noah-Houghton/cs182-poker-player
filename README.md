@@ -36,9 +36,11 @@ Example command line to run with default config
 Example command line to run with custom config
 `python simulate.py -p MonteCarloBot -o RandomBot -n 3 -g 10 -a 5 -s 500 -r 15 -m 15`
 
-`simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog> -l <alpha> -e <epsilon> -d <discount>`
+`simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog> -l <alpha> -e <epsilon> -d <discount> -v <rememberVals>`
 
 Note that the latter three values `-l`, `-e`, and `-d` are only used in QLearning agents. If they are accidentally left in, the simulator will ignore them. The default values for these variables are not defined by `simulate.py`, but rather by the agents themselves in their `__init__` function.
+
+If `-q` is included, the relevant values generated during training will be saved to the `saved_values` folder. These values will then be used by an agent run in the GUI, allowing you to play against the most recently trained agent of that type. This value is set to false by default, as it causes the agent to remember its most recent game - a significant issue if you're trying to run many trainings independently, but a fun way to see the results of your algorithms if you are not. 
 
 ## Coding an Agent
 Agents should be set up in their own python file. Ensure that the name of the agent is the same as the file (camelCase does not have to match), e.g. exampleagent.py contains ExampleAgent(). Although your agent can be named in camelcase, IT IS CRUCIAL THAT YOU DO NOT HAVE A FILE NAME IN CAMELCASE. File names should be in lowercase as one word - violating this invariant will break setupgame.py, which means you'll have to manually edit the poker_conf.yaml file.

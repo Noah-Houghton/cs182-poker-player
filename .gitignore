@@ -7,6 +7,9 @@ __pycache__/
 *Bot.txt
 *_configs.txt
 
+# bot learned values
+*_vals.dill
+
 # game config
 *.yaml
 

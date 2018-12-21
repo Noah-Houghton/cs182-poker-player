@@ -5,7 +5,13 @@ from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_ca
 import random as rand
 import math
 import util
+import os, sys
+import dill
 from pypokerengine.api.emulator import Emulator
+
+bot = os.path.basename(__file__)[:-4]
+path = os.path.dirname(os.path.abspath(__file__))
+VALUESFILE = path + "/saved_values/" + bot + "_vals.dill"
 
 def estimateVictoryChance(nb_player, hole_card, community_card):
     # Do a Monte Carlo simulation given the current state of the game by evaluating the hands
@@ -36,6 +42,20 @@ class SARSABot(BasePokerPlayer):
         self.currState = None
         self.currentInvestment = 0
         self.doUpdate = True
+        self.SAVEVALS = False
+
+    def saveValues(self):
+        with open(VALUESFILE, 'w+') as f:
+            dill.dump(self.qvalues, f)
+
+    def attemptLoadVals(self):
+        if not self.qvalues == {}:
+            try:
+                with open(VALUESFILE, 'r+') as f:
+                    self.qvalues = dill.load(f)
+            except Exception as exception:
+                print(exception)
+                pass
 
     def getQValue(self, state, action):
         if action not in ('fold', 'call', 'raise'):
@@ -150,4 +170,7 @@ class SARSABot(BasePokerPlayer):
 
 
 def setup_ai():
-    return SARSABot()
+    bot = SARSABot()
+    if bot.SAVEVALS:
+        bot.attemptLoadVals()
+    return bot

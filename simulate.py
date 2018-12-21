@@ -36,10 +36,11 @@ def main(argv):
     numTraining = 0
     numAgents = 1
     numGames = 1
+    rememberVals = False
 
-    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog> -l <alpha> -e <epsilon> -d <discount>'
+    helpMessage = 'simulate.py -p <agentType> -o <opponentType> -n <numOpponents> -g <numGames> -a <ante> -b <blind_structure> -s <initial_stack> -r <max_round> -m <small_blind> -t <numTraining> -w <writeToLog> -l <alpha> -e <epsilon> -d <discount> -v <rememberVals>'
     try:
-        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:wl:e:d:", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining=", "writeToLog=", "alpha=", "epsilon=", "discount="])
+        opts, args = getopt.getopt(argv, "hp:n:g:o:a:b:s:r:m:t:wl:e:d:v", ["agentType=", "numOpponents=", "numGames=", "opponentType=", "ante=", "blind_structure=", "initial_stack=", "max_round=", "small_blind=", "numTraining=", "writeToLog=", "alpha=", "epsilon=", "discount=", "rememberVals="])
     except getopt.GetoptError:
         print(helpMessage)
         sys.exit(2)
@@ -75,11 +76,17 @@ def main(argv):
             epsilon = float(arg)
         elif opt in ('-d', '--discount'):
             discount = float(arg)
+        elif opt in ('-v, --rememberVals'):
+            rememberVals = True
 
 
     bots = []
     module = importlib.import_module('.'+agentType.lower(), package="bots")
     agent = module.setup_ai()
+    try:
+        agent.SAVEVALS = rememberVals
+    except:
+        pass
     # class_ = getattr(module, agentType)
     # agent = class_()
     bots.append(agent)
@@ -141,6 +148,16 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
             # forget record from training games
             bot.roundWins = 0
             bot.roundLosses = 0
+    # attempt to save values for agent
+    try:
+        if agent.SAVEVALS:
+            try:
+                agent.saveValues()
+            except:
+                print("could not save values")
+                pass
+    except:
+        pass
     gameTime = time.time()
     consoleLog("Beginning {} games.".format(numGames))
     for round in range(numGames):
@@ -228,7 +245,6 @@ def runGames(bots, numAgents, numGames, agent, conf, numTraining, log):
         configuration = "Ante: {} Small Blind: {} Initial Stack: {} Max Round: {} Number Opponents: {} Opponent Type: {}\n".format(conf["a"], conf["sb"], conf["s"], conf["r"], numAgents, conf["opponentType"])
         with open("outputs/{}_configs.txt".format(conf["agentType"]), "a+") as output:
             output.write(configuration)
-
 
 if __name__ == '__main__':
     main(sys.argv[1:])

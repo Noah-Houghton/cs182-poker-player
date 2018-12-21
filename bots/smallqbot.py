@@ -7,6 +7,13 @@ import time
 import random as rand
 import util
 import math
+import os, sys
+import dill
+
+
+bot = os.path.basename(__file__)[:-3]
+path = os.path.dirname(os.path.abspath(__file__))
+VALUESFILE = path + "/saved_values/" + bot + "_vals.dill"
 
 
 class SmallQBot (BasePokerPlayer):
@@ -29,10 +36,24 @@ class SmallQBot (BasePokerPlayer):
         self.currentMoney = 0
         self.currentInvestment = 0
         self.doUpdate = True
+        self.SAVEVALS = False
+
+    def saveValues(self):
+        with open(VALUESFILE, 'w+') as f:
+            dill.dump(self.qvalues, f)
+
+    def attemptLoadVals(self):
+        if not self.qvalues == {}:
+            try:
+                with open(VALUESFILE, 'r+') as f:
+                    self.qvalues = dill.load(f)
+            except Exception as exception:
+                print(exception)
+                pass
 
     def getState(self, strength):
         return int(math.log(strength, 1.05))
-        # return strength 
+        # return strength
 
     def getLegalActions(self, round_state):
         table = _restore_table(round_state)
@@ -134,7 +155,7 @@ class SmallQBot (BasePokerPlayer):
         reward = 0
         if is_winner:
             reward = (agentWon[0] - self.currentMoney)
-            reward = math.log(reward) 
+            reward = math.log(reward)
         elif self.currentInvestment > 0:
             reward = math.log(self.currentInvestment) * -1.0
         cur_state = self.getState(HandEvaluator.eval_hand(self.hand, self.curCC))
@@ -142,4 +163,7 @@ class SmallQBot (BasePokerPlayer):
             self.update(cur_state, self.latestAction, None, reward, round_state)
 
 def setup_ai():
-    return SmallQBot()
+    bot = SmallQBot()
+    if bot.SAVEVALS:
+        bot.attemptLoadVals()
+    return bot

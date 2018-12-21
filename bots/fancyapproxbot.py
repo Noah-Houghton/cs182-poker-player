@@ -8,6 +8,12 @@ import time
 import random as rand
 import util
 import math
+import os, sys
+import dill
+
+bot = os.path.basename(__file__)[:-4]
+path = os.path.dirname(os.path.abspath(__file__))
+VALUESFILE = path + "/saved_values/" + bot + "_vals.dill"
 
 class FancyApproxBot (BasePokerPlayer):
 
@@ -29,7 +35,20 @@ class FancyApproxBot (BasePokerPlayer):
         self.last_round_state = None
         self.curCC = None
         self.doUpdate = True
+        self.SAVEVALS = False
 
+    def saveValues(self):
+        with open(VALUESFILE, 'w+') as f:
+            dill.dump(self.weights, f)
+
+    def attemptLoadVals(self):
+        if not self.weights == {}:
+            try:
+                with open(VALUESFILE, 'r+') as f:
+                    self.weights = dill.load(f)
+            except Exception as exception:
+                print(exception)
+                pass
 
     def getLegalActions(self, round_state):
         table = _restore_table(round_state)
@@ -156,7 +175,7 @@ class FancyApproxBot (BasePokerPlayer):
         self.latestAction = None
         self.latestBet = 0
 
-    def receive_street_start_message(self, street, round_state):            
+    def receive_street_start_message(self, street, round_state):
         self.pot = round_state['pot']['main']['amount']
         self.currentMoney = [s["stack"] for s in round_state["seats"] if s["uuid"] == self.uuid][0]
 
@@ -183,4 +202,7 @@ class FancyApproxBot (BasePokerPlayer):
                 print self.weights
 
 def setup_ai():
-    return FancyApproxBot()
+    bot = FancyApproxBot()
+    if bot.SAVEVALS:
+        bot.attemptLoadVals()
+    return bot
