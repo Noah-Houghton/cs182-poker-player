@@ -44,6 +44,8 @@ If `-v` is included, the relevant values generated during training will be saved
 
 This has to be done, even if you've used `-v` in your simulate command. This is an unfortunate side effect of the `PyPokerGUI`, which makes it difficult to propagate this command. In short: `-v` will save the values, change the value in `ZZZbot.py` to actually see the values reflected in the poker GUI.
 
+It is also important that you use the same game configuration to run the GUI as you do to train the agent. Otherwise, the agent will have learned to play a completely different game, and will likely perform poorly even if it has a high win rate in simulation.
+
 ## Coding an Agent
 Agents should be set up in their own python file. Ensure that the name of the agent is the same as the file (camelCase does not have to match), e.g. exampleagent.py contains ExampleAgent(). Although your agent can be named in camelcase, IT IS CRUCIAL THAT YOU DO NOT HAVE A FILE NAME IN CAMELCASE. File names should be in lowercase as one word - violating this invariant will break setupgame.py, which means you'll have to manually edit the poker_conf.yaml file.
 
