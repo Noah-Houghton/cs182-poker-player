@@ -89,8 +89,6 @@ would go after receive_round_result_message(), tabbed in at the same level as cl
 - More about callback functions: https://github.com/ishikota/PyPokerEngine/blob/master/AI_CALLBACK_FORMAT.md
 
 # Report
-<object data="https://github.com/Noah-Houghton/cs182-poker-player/blob/master/CS_182_Final_Project_Report.pdf" type="application/pdf" width="700px" height="700px">
-    <embed src="https://github.com/Noah-Houghton/cs182-poker-player/blob/master/CS_182_Final_Project_Report.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/Noah-Houghton/cs182-poker-player/blob/master/CS_182_Final_Project_Report.pdf">Download PDF</a>.</p>
+Click here to view our final report: <a href="https://github.com/Noah-Houghton/cs182-poker-player/blob/master/CS_182_Final_Project_Report.pdf">CS_182_Final_Project_Report.pdf</a>.
     </embed>
 </object>
